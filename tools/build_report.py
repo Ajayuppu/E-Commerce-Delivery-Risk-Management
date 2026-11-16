@@ -18,6 +18,7 @@ cat = T("06_failure_by_category.csv"); prof = T("06_error_profile.csv", index_co
 abl = T("06_ablation.csv"); ph = T("06_posthoc_slack_features.csv"); rank = T("06_precision_by_daily_rank.csv")
 audit = T("03_feature_availability_audit.csv"); leak = T("03_leakage_bruteforce_check.csv")
 daily = T("05_daily_model_vs_rule.csv"); cens = T("02_censoring_by_month.csv")
+csens = T("05_censoring_sensitivity.csv").set_index("method")
 dp = pd.read_csv(OUT / "daily_prioritization_test.csv")
 status = T("01_order_status.csv"); tab = T("01_table_audit.csv")
 RND = "random (mean of 200 draws)"
@@ -69,7 +70,9 @@ for _ in range(4): d.add_paragraph()
 p = d.add_paragraph(); p.alignment = WD_ALIGN_PARAGRAPH.CENTER
 r = p.add_run("Data: Olist Brazilian E-Commerce Public Dataset (99,441 orders, 2016–2018)\n"
               "Environment: Amazon SageMaker Studio – domain machinelearningproj2ajay-ecommerce, space mlproj2-ecommerce-space\n"
-              "All numbers in this report are read from the files in outputs/ produced by the notebooks.")
+              "All numbers in this report are read from the files in outputs/ produced by the notebooks.\n"
+              "Final numbers come from a full local re-run (same pinned libraries) after a leakage fix on 15 Nov 2026; the SageMaker Studio space\n"
+              "still holds the earlier pre-fix run (update it with git pull or aws s3 sync from the studio-v2-fixed/ prefix, see Appendix F).")
 r.font.size = Pt(9); r.font.color.rgb = RGBColor(0x59, 0x59, 0x59)
 d.add_page_break()
 
@@ -90,7 +93,7 @@ bullets(d, [
      f"{iv(valc.set_index('method').loc['lgbm (best config)','late_identified'])} late orders captured) and on test ({iv(o('logreg','late_identified'))} vs {iv(o('lgbm','late_identified'))})."),
     ("Rules are unstable: ", f"the rule chosen on validation ({NAME[R].split(': ')[1]}) captured {iv(o(R,'late_identified'))} late orders on test – barely above random. "
      f"The shortest-promise rule, which was the worst method on validation (below random), was the best on test ({iv(o('rule_shortest_promise','late_identified'))}). "
-     f"The model was the only method well above random in both periods."),
+     f"The two learned models were the only methods well above random in both periods."),
     ("Limits: ", f"precision is low in absolute terms (most flagged orders arrive on time), performance fell to random level in August 2018 when lateness "
      f"rose in São Paulo, and identifying a late order does not prove an investigation would have prevented the delay."),
 ])
@@ -141,6 +144,7 @@ add_table(d, pd.DataFrame([
     ["Status 'delivered' without delivery date", q["status=delivered but delivered_customer missing"], "Undetermined"],
     ["Delivered before carrier pickup", q["delivered to customer before carrier pickup"], "Kept; carrier date not used"],
     ["Carrier pickup before approval", q["carrier pickup before approval"], "Kept; carrier date not used"],
+    ["Delivered to customer before approval", q["delivered to customer before approval"], "Kept; its outcome becomes usable history only from its own approval time (event time = max(delivery, approval)), so it never enters its own features"],
     ["Orders without item rows", rv("orders without any item row"), "Basket features missing → imputed + indicator"],
     ["Customer zips not in geolocation", rv("customer zips missing from geolocation"), "Distance missing → geo_missing flag"],
     ["Products without category", rv("products without category"), "Category 'unknown' + category_missing"],
@@ -169,10 +173,10 @@ d.add_paragraph(
 add_table(d, mat.rename(columns={"days_after_approval": "Days after approval", "share_all_outcomes_known": "Share of all outcomes known",
                                  "share_late_outcomes_known": "Share of late outcomes known"}), "Table 3. Label maturity (outcomes observed within X days of approval)", nd=3, font=8.5)
 s2 = split.copy(); s2["approval_from"] = s2.approval_from.str[:10]; s2["approval_to"] = s2.approval_to.str[:10]
-s2 = s2[["split", "approval_from", "approval_to", "days", "orders_in_daily_pool", "late", "on_time", "undetermined", "late_rate_labelled", "rows_used_for_fitting"]]
-s2.columns = ["Split", "From", "To", "Days", "Daily-pool orders", "Late", "On time", "Undetermined", "Late rate", "Rows used for fitting*"]
+s2 = s2[["split", "approval_from", "approval_to", "days", "orders_in_daily_pool", "late", "on_time", "undetermined", "late_rate_labelled", "fit_rows_of_model_scored_on_next_split"]]
+s2.columns = ["Split", "From", "To", "Days", "Daily-pool orders", "Late", "On time", "Undetermined", "Late rate", "Fit rows of model scored on next split*"]
 add_table(d, s2, "Table 4. Modeling examples and outcomes per split", nd=4, font=8)
-p = d.add_paragraph(); r = p.add_run("*Train row: model fitted for validation-based selection (cutoff 2018-03-01). Validation row: final refit on train+validation (cutoff 2018-06-01) used on the test period."); r.font.size = Pt(8); r.italic = True
+p = d.add_paragraph(); r = p.add_run("*Train row: training rows (labels mature at 2018-03-01) that fit the models scored on validation for selection. Validation row: train+validation rows (labels mature at 2018-06-01) that fit the final models scored on test. Test row: never used for fitting."); r.font.size = Pt(8); r.italic = True
 
 d.add_heading("2.4 Approval-time features and leakage prevention", level=2)
 d.add_paragraph(
@@ -184,7 +188,10 @@ bullets(d, [
      "was observed strictly before the scored order's approval – not orders merely approved earlier, whose outcomes were still unknown. Rates are smoothed "
      "towards the market rate known at that time (m = 20 pseudo-orders)."),
     ("Activity history ", "(seller prior orders, orders in the last 7 days, open and overdue orders, repeat-customer count) uses approval timestamps strictly before the scored order."),
-    ("Verified by brute force: ", f"for {len(leak)} random orders the history features were recomputed with plain filters; all matched "
+    ("Delivery-before-approval edge case. ", f"{q['delivered to customer before approval']} orders carry a delivery timestamp earlier than their own approval timestamp. "
+     "An outcome is therefore used as history only from max(delivery, approval); without this rule these orders would have seen their own label "
+     "(found in an audit and fixed; all results in this report are from the corrected pipeline)."),
+    ("Verified by brute force: ", f"for {len(leak)} orders ({len(leak) - int(leak.delivered_before_own_approval.sum())} random + all {int(leak.delivered_before_own_approval.sum())} delivery-before-approval edge cases) the history features were recomputed with plain filters; all matched "
      f"({pct(leak.match_outcomes.mean(),0)} / {pct(leak.match_orders.mean(),0)} / {pct(leak.match_customer.mean(),0)}), no order used its own outcome and no outcome dated after approval was used (notebook 03, cell 5)."),
     ("Missing values ", "are median-imputed with missing-indicator columns (logistic regression) or handled natively (LightGBM); rare categories (< 50 rows) are grouped."),
 ])
@@ -220,6 +227,11 @@ bullets(d, [
      f"{iv(o(P,'days_with_fewer_than_k_orders'))} test days, so {iv(o(P,'investigations'))} instead of {iv(10*o(P,'days'))} investigations were used."),
     ("Outcome accounting. ", "Selected & late = late order identified; selected & on time = unnecessary investigation; selected & undetermined = reported separately "
      "(canceled/unavailable/no delivery record); late & not selected = missed. The perfect-foresight maximum under the same cap is reported as an upper bound."),
+    ("Incomplete outcomes and censoring. ", f"The data export ends on {csens.attrs.get('export','2018-10-17')}; the last test approvals are only ~49 days old at that point. "
+     f"Orders without a delivery record are 'undetermined' (main analysis). As a sensitivity check, undelivered orders that were still open at export (shipped/invoiced/processing, "
+     f"not canceled/unavailable) and already past their promised date ({iv(csens.loc[P,'problems_in_pool_adjusted'] - o(P,'pool_late'))} test orders) are counted as delivery problems: the model then identifies "
+     f"{iv(csens.loc[P,'problems_identified_censoring_adjusted'])} problems (vs {iv(o(P,'late_identified'))}), the reference rule {iv(csens.loc[R,'problems_identified_censoring_adjusted'])} "
+     f"and the shortest-promise rule {iv(csens.loc['rule_shortest_promise','problems_identified_censoring_adjusted'])}; the ranking of methods is unchanged (outputs/tables/05_censoring_sensitivity.csv)."),
     ("Predictive metrics. ", "With only 3.6–10% positives, accuracy is meaningless (predicting 'on time' for everyone gives 96% on test). I report PR-AUC (average precision; "
      "random = base rate), ROC-AUC, Brier score, and the operational precision@10/day, which is the business metric used for selection."),
     ("Uncertainty. ", "A day-level bootstrap (5,000 resamples) of the daily difference in late orders identified quantifies model-vs-rule uncertainty."),
@@ -257,9 +269,11 @@ bt = bt[[c for c in [P, other, R, "rule_shortest_promise", "random"] if c in bt.
 bp = bud.pivot_table(index="k_per_day", columns="method", values="precision")
 bt.columns = ["k / day"] + [NAME.get(c, "Random") if c != "random" else "Random" for c in bt.columns[1:]]
 add_table(d, bt, "Table 8. Late orders identified on test for different daily budgets", nd=1, font=8.5)
+p = d.add_paragraph(); r = p.add_run(f"Random = mean of 200 random daily selections per budget. The k = 10 value ({f(b10.loc['random','late_identified'],2)}) comes from a separate set of draws than Table 7 "
+    f"({f(ops.loc[RND,'late_identified'],2)}); the gap is simulation noise (SD of one draw ≈ {f(b10.loc['random','late_identified_sd'],1)})."); r.font.size = Pt(8); r.italic = True
 d.add_paragraph(
     f"Precision decreases as the budget grows ({pct(bp.loc[5,P])} at k = 5, {pct(bp.loc[10,P])} at 10, {pct(bp.loc[50,P])} at 50 for the model), confirming that the score "
-    "ranks the riskiest orders first; the first two daily ranks were late about 13% of the time versus 4–7% at ranks 6–10 (Appendix D). Extra capacity "
+    "ranks the riskiest orders first; the first two daily ranks were late about 13% of the time versus 3–9% at ranks 6–10 (Appendix D). Extra capacity "
     "beyond ~20/day mostly buys unnecessary investigations.")
 d.add_heading("6.2 Performance over time", level=2)
 mm = mon[mon.method == P][["month", "pool_orders", "pool_late", "base_rate", "late_identified", "precision", "lift_vs_random", "pr_auc", "roc_auc"]]
@@ -277,7 +291,7 @@ d.add_paragraph(
     f"Rio de Janeiro received {iv(st_.set_index('customer_state').loc['RJ','selected'])} of the {iv(o(P,'investigations'))} investigations. Missed late orders "
     f"are typically short routes with ordinary history (median distance {f(prof.loc['distance_km','missed late'],0)} km vs {f(prof.loc['distance_km','caught (hits)'],0)} km for hits; "
     f"promised window {f(prof.loc['promised_days','missed late'],0)} vs {f(prof.loc['promised_days','caught (hits)'],0)} days). False alarms look like the hits on every approval-time "
-    "attribute – their difference only appears after approval. Category view: health_beauty and bed_bath_table were captured reasonably (≈23–26%), housewares almost never (Appendix D).")
+    "attribute – their difference only appears after approval. Category view: health_beauty and bed_bath_table were captured reasonably (≈26%), housewares almost never (Appendix D).")
 add_fig(d, FIG / "06_model_drivers.png", "Figure 3. Model drivers: logistic-regression coefficients (left) and LightGBM gain importance (right).", 6.4)
 d.add_heading("6.4 Further diagnostics", level=2)
 bullets(d, [
@@ -295,7 +309,7 @@ bullets(d, [
 d.add_heading("7. Operational recommendation", level=1)
 d.add_paragraph(
     "Does the model improve identification and prioritisation? Yes, modestly and more reliably than any single rule chosen in advance. Compared with no "
-    f"prioritisation it roughly doubles to quadruples the share of useful investigations (validation {pct(valc.set_index('method').loc['logreg (best config)','precision'])} vs "
+    f"prioritisation it roughly triples the share of useful investigations (validation {pct(valc.set_index('method').loc['logreg (best config)','precision'])} vs "
     f"{pct(valc.set_index('method').loc[RND,'precision'])}; test {pct(o(P,'precision'))} vs {pct(o(RND,'precision'))}). Every rule was either good on validation and poor on test, or the reverse; "
     "the team could not have known in advance which rule to use.")
 bullets(d, [
@@ -313,7 +327,9 @@ bullets(d, [
     "Observational data only: identifying an order that later arrived late does not show that investigating it would have prevented the delay; no reduction in late deliveries or revenue loss is claimed.",
     "Absolute precision is low (≈8% on test); the evaluation covers one 3-month test window with a lower late rate than training, and results vary strongly by month.",
     "The promised delivery date and shipping limit are assumed to be visible at approval; the dataset is a cleaned public sample (2016–2018) whose processes may differ from current operations.",
-    "Undetermined orders (canceled/unavailable) are kept in the pool but counted separately; if some were problem orders the true precision is slightly higher.",
+    "Undetermined orders (canceled/unavailable/never delivered) are kept in the pool but counted separately. The outcome record is right-censored at the export date: "
+    f"{iv(csens.loc[P,'problems_in_pool_adjusted'] - o(P,'pool_late'))} test orders were still open and past their promised date when the data ended, so the main late counts are a lower bound "
+    "(the censoring-adjusted check in §4 leaves the conclusions unchanged).",
     "Label maturity drops recent training data (60-day window), which delays reaction to new patterns; the post-hoc slack analysis used test information and is not a valid estimate.",
     "Multi-seller orders (≈1.3%) are represented by the highest-value seller.",
 ])
@@ -368,6 +384,13 @@ d.add_heading("Appendix F. Reproducibility and AWS environment", level=1)
 bullets(d, [
     "Code: src/olist_risk (package) + notebooks 00–06 executed in order by run_all.py (papermill); requirements.txt pins all versions.",
     "Execution: SageMaker Studio domain machinelearningproj2ajay-ecommerce (us-east-1), user profile ajay-uppu, private JupyterLab space mlproj2-ecommerce-space (the reported run executed on ml.m5.large in 283 s; the space was then switched to ml.m5.xlarge and left running). A lifecycle configuration copies the project from s3://ml-project2-olist-044450716277/ml-project2-v2/studio/, creates a virtual environment and kernel 'Python (ml-project2-v2)', and executes the notebooks; executed notebooks and outputs are copied to .../ml-project2-v2/studio-run/.",
+    "Final numbers: after the submission run in Studio, an audit found that 61 orders delivered before their own approval timestamp could see their own label in the "
+    "outcome-history features. The fix (outcome event time = max(delivery, approval)) was applied, logistic regression was given max_iter = 20,000 and tol = 1e-8, and the whole "
+    "pipeline (notebooks 00–06) was re-run locally on the project machine with the pinned versions in requirements.txt. Every number, table, figure, notebook output and the daily list "
+    "in this report come from that run. The Studio space still contains the pre-fix copy; update it with `git pull` (GitHub) or "
+    "`aws s3 sync s3://ml-project2-olist-044450716277/ml-project2-v2/studio-v2-fixed/ ~/ml-project2-v2/` and re-run run_all.py.",
+    "Determinism: seeds are fixed and LightGBM runs with deterministic=True. Different CPUs/BLAS builds can still move weakly regularised logistic-regression "
+    "configurations by a few validation hits (seen in an earlier cross-machine check for C = 1.0); the selected configuration and all reported results were identical across machines.",
     "Raw data: the nine CSVs from the provided archive (byte-identical to the course Drive folder) – not included in the submission.",
     "Step-by-step instructions: REPRODUCTION_GUIDE.md / .docx and the per-cell execution guide.",
 ])

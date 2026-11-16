@@ -233,9 +233,10 @@ for s in ["train", "validation", "test"]:
                  "labelled_orders": int((m & lab.outcome_known).sum()), "late": int((m & (lab.is_late == 1)).sum()),
                  "on_time": int((m & (lab.is_late == 0)).sum()), "undetermined": int((m & ~lab.outcome_known).sum()),
                  "late_rate_labelled": round(lab.loc[m & lab.outcome_known, "is_late"].mean(), 4),
-                 "rows_used_for_fitting": int(lab.loc[m, "train_eligible"].sum()) if s == "train" else (int(lab.trainval_eligible.sum()) if s == "validation" else 0)})
+                 "fit_rows_of_model_scored_on_next_split": int(lab.loc[m, "train_eligible"].sum()) if s == "train" else (int(lab.trainval_eligible.sum()) if s == "validation" else 0)})
 split = pd.DataFrame(rows); split.to_csv(config.TABLE_DIR / "02_split_summary.csv", index=False); display(split)
-print("rows_used_for_fitting: train row = model selected on validation; validation row = final refit on train+validation (used for test).")'''),
+print("fit_rows_of_model_scored_on_next_split: train row = rows that fit the models scored on VALIDATION (selection, cutoff 2018-03-01); "
+      "validation row = train+validation rows that fit the final models scored on TEST (cutoff 2018-06-01); test row = 0 (never used for fitting).")'''),
 ("code", '''# Cell 9 - distribution of days late (late orders only)
 dl = lab[lab.is_late == 1].days_late
 fig, ax = plt.subplots(figsize=(8, 3.2)); ax.hist(dl.clip(upper=60), bins=60, color="#d62728")
@@ -272,9 +273,11 @@ print("one row per order_id: OK  |  predictors:", len(features.FEATURES),
 audit = features.feature_availability_audit()
 audit.to_csv(config.TABLE_DIR / "03_feature_availability_audit.csv", index=False)
 display(audit[["feature_or_field", "source", "observed_at", "used_as_predictor"]])'''),
-("code", '''# Cell 5 - leakage unit test: recompute seller/customer history by brute force for 300 random orders
+("code", '''# Cell 5 - leakage unit test: brute-force recompute of seller/customer history for 300 random orders
+#          + every order whose delivery timestamp precedes its own approval timestamp (own-label edge case)
 chk = features.verify_history_bruteforce(ft, lab, n=300)
 summary = chk[["match_outcomes", "match_orders", "match_customer", "no_future_outcome"]].mean()
+print(f"orders checked: {len(chk)} (300 random + {int(chk.delivered_before_own_approval.sum())} delivered-before-approval edge cases)")
 display(summary.to_frame("share_true"))
 assert summary.min() == 1.0 and not chk.own_outcome_used.any()
 chk.to_csv(config.TABLE_DIR / "03_leakage_bruteforce_check.csv", index=False)
@@ -489,7 +492,21 @@ db = policy.daily_breakdown(test_pool, methods[P]); db.to_csv(config.TABLE_DIR /
 print("days in test:", len(db), "| days with < 10 approved orders:", int((db.orders_approved < 10).sum()),
       "| investigations used:", int(db.selected.sum()), "of", 10 * len(db), "possible")
 print("selected orders with undetermined outcome (canceled/unavailable/not delivered):", int(db.undetermined_selected.sum()))
-display(db.describe().round(2))'''),
+display(db.describe().round(2))
+# Sensitivity for incomplete outcomes (right-censoring at the data export, 2018-10-17): an undelivered order that was not
+# canceled/unavailable (still open: shipped/invoiced/processing/approved/created) and was already past its promised date at export is at least overdue -> count it as a delivery problem.
+export_ts = ft.order_purchase_timestamp.max()
+adj_status, open_overdue = policy.censoring_adjusted_status(test_pool, export_ts)
+print(f"data export: {export_ts} | test orders undetermined: {int((test_pool.outcome_status == 'undetermined').sum())}, "
+      f"of which still open (shipped/invoiced/processing/approved/created) and past the promised date at export: {int(open_overdue.sum())}")
+tp_adj = test_pool.assign(outcome_status=adj_status)
+cs = []
+for name, col in methods.items():
+    e0, e1 = policy.evaluate_policy(test_pool, col), policy.evaluate_policy(tp_adj, col)
+    cs.append({"method": name, "late_identified_main": e0["late_identified"], "problems_identified_censoring_adjusted": e1["late_identified"],
+               "precision_main": e0["precision"], "precision_censoring_adjusted": e1["precision"],
+               "problems_in_pool_adjusted": e1["pool_late"], "undetermined_selected_adjusted": e1["undetermined_selected"]})
+cs = pd.DataFrame(cs).set_index("method"); cs.to_csv(config.TABLE_DIR / "05_censoring_sensitivity.csv"); display(cs.round(4))'''),
 ])
 
 # ============================================================================ 06

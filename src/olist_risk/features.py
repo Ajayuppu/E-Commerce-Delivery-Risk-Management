@@ -13,6 +13,11 @@ Rules
       before it;
     - activity aggregates (prior orders, open orders, orders last 7 days) use approval
       timestamps strictly before the scored approval time.
+* Outcome event time = max(order_delivered_customer_date, order_approved_at). 61 orders carry a
+  customer-delivery timestamp EARLIER than their own approval timestamp (data-entry artefact).
+  Without the max() such an order's own outcome would enter its own seller/state/route/category/
+  market late-rate features; with it, an outcome can never be "known" before the order it belongs
+  to was approved, so no order ever sees its own label (verified in verify_history_bruteforce).
 """
 import numpy as np
 import pandas as pd
@@ -81,6 +86,13 @@ def _active_at(st_key, start, end, q_key, q_time):
     ended = _cum_before(st_key, end, np.ones(len(end)), q_key, pd.Series(q_time) + pd.Timedelta(1, "ns"))
     started, ended = np.nan_to_num(started), np.nan_to_num(ended)
     return started - ended
+
+
+def outcome_event_time(df):
+    """Time at which an order's outcome may be used as history = max(delivery, approval).
+    NaT when the outcome was never observed."""
+    ok, a = df["outcome_known_at"], df["order_approved_at"]
+    return ok.where(ok.isna() | a.isna() | (ok > a), a)
 
 
 def _smoothed_rate(late, n, prior, m=config.SMOOTH_M):
@@ -159,7 +171,7 @@ def add_history_features(df, lab):
     d = df.merge(lab[["order_id", "is_late", "outcome_known_at", "order_delivered_customer_date",
                       "order_delivered_carrier_date"]], on="order_id", how="left")
     a = d.order_approved_at
-    ok = d.outcome_known_at  # NaT when outcome never observed
+    ok = outcome_event_time(d)  # max(delivery, approval); NaT when outcome never observed
     late = d.is_late.fillna(0).values
     has_out = d.outcome_known_at.notna().astype(float).values
     one = np.ones(len(d))
@@ -291,17 +303,22 @@ def feature_availability_audit():
 # ----------------------------------------------------------------------------- leakage test
 def verify_history_bruteforce(ft, lab, n=300, seed=config.SEED):
     """Recompute seller history for a random sample with plain boolean filters and compare
-    with the vectorised features. Returns a DataFrame; all `match_*` columns must be True."""
+    with the vectorised features. Returns a DataFrame; all `match_*` columns must be True.
+    The sample = n random daily-pool orders PLUS every order whose delivery timestamp precedes
+    its own approval timestamp (the edge case that could leak an order's own label)."""
     rng = np.random.default_rng(seed)
     pool = ft[ft.in_daily_pool].reset_index(drop=True)
     idx = rng.choice(len(pool), size=min(n, len(pool)), replace=False)
+    anomalous = np.flatnonzero((pool.outcome_known_at < pool.order_approved_at).values)
+    idx = np.concatenate([idx, np.setdiff1d(anomalous, idx)])
     full = ft[["order_id", "main_seller_id", "order_approved_at", "customer_unique_id"]].merge(
         lab[["order_id", "is_late", "outcome_known_at"]], on="order_id")
+    full["event_time"] = outcome_event_time(full)                          # max(delivery, approval)
     rows = []
     for i in idx:
         r = pool.iloc[i]
         same = full[full.main_seller_id == r.main_seller_id]
-        known = same[same.outcome_known_at < r.order_approved_at]           # outcome observed before approval
+        known = same[same.event_time < r.order_approved_at]                # outcome usable before approval
         approved_before = same[same.order_approved_at < r.order_approved_at]
         cust = full[(full.customer_unique_id == r.customer_unique_id) & (full.order_approved_at < r.order_approved_at)]
         rows.append({
@@ -309,8 +326,9 @@ def verify_history_bruteforce(ft, lab, n=300, seed=config.SEED):
             "bf_seller_prior_outcomes": len(known), "ft_seller_prior_outcomes": r.seller_prior_outcomes,
             "bf_seller_prior_orders": len(approved_before), "ft_seller_prior_orders": r.seller_prior_orders,
             "bf_customer_prior_orders": len(cust), "ft_customer_prior_orders": r.customer_prior_orders,
+            "delivered_before_own_approval": bool(r.outcome_known_at < r.order_approved_at),
             "own_outcome_used": bool((known.order_id == r.order_id).any()),
-            "latest_outcome_used": known.outcome_known_at.max(),
+            "latest_outcome_used": known.event_time.max(),
         })
     out = pd.DataFrame(rows)
     out["match_outcomes"] = out.bf_seller_prior_outcomes == out.ft_seller_prior_outcomes

@@ -1,0 +1,7 @@
+method,late_identified_main,problems_identified_censoring_adjusted,precision_main,precision_censoring_adjusted,problems_in_pool_adjusted,undetermined_selected_adjusted
+logreg,71,86,0.08170310701956271,0.09896432681242807,863,4
+lgbm,60,77,0.06904487917146145,0.08860759493670886,863,1
+rule_shortest_promise,80,89,0.09205983889528194,0.10241657077100115,863,17
+rule_longest_distance,34,45,0.039125431530494824,0.05178365937859609,863,1
+rule_highest_freight_ratio,18,24,0.020713463751438434,0.02761795166858458,863,1
+rule_worst_seller_history,44,51,0.05063291139240506,0.05868814729574223,863,4

@@ -14,16 +14,27 @@ Each method investigates the top 10 orders per day (869 investigations; 2 days h
 
 | Method | Late identified | Unnecessary | Undetermined selected | Late missed | Precision |
 |---|---|---|---|---|---|
-| **Logistic regression (proposed, chosen on validation)** | **70** | 780 | 19 | 602 | 8.1% |
-| LightGBM | 58 | 796 | 15 | 614 | 6.7% |
+| **Logistic regression (proposed, chosen on validation)** | **71** | 779 | 19 | 601 | 8.2% |
+| LightGBM | 60 | 791 | 18 | 612 | 6.9% |
 | Rule: longest distance (best rule on validation) | 34 | 823 | 12 | 638 | 3.9% |
 | Rule: shortest promised window | 80 | 763 | 26 | 592 | 9.2% |
 | Random selection (mean of 200 draws) | 26.45 | 828.05 | 14.5 | 645.55 | 3.0% |
 
-* Validation (Mar–May 2018): logistic regression 256 late orders identified, LightGBM 227, longest-distance rule 202, random 87.8, shortest-promise rule 46.
-* The model found 2.27× more late orders than random and +36 vs the reference rule (95% day-bootstrap CI 20–55). Perfect foresight could have found 437.
+* Validation (Mar–May 2018): logistic regression 255 late orders identified, LightGBM 227, longest-distance rule 202, random 87.8, shortest-promise rule 46.
+* The model found 2.31× more late orders than random and +37 vs the reference rule (95% day-bootstrap CI 21–56). Perfect foresight could have found 437.
 * Honest caveat: the shortest-promise rule (worst on validation) was best on test – a sign of drift (late rate 10.3% in validation vs 3.6% in test). It was not swapped in after the fact; see the report's diagnostics.
-* Test PR-AUC / ROC-AUC: logistic regression 0.068 / 0.624 (base rate 0.036).
+* Test PR-AUC / ROC-AUC: logistic regression 0.067 / 0.625 (base rate 0.036).
+* Censoring check: 191 test orders were still open and past their promised date when the data export ended (2018-10-17). Counting them as delivery problems gives logistic regression 86, shortest-promise rule 89, longest-distance rule 45, LightGBM 77; the ranking is unchanged (`outputs/tables/05_censoring_sensitivity.csv`).
+
+> **Which run these numbers come from.** After the original SageMaker Studio run, an audit found that 61 orders whose
+> customer-delivery timestamp is *earlier* than their own approval timestamp could see their own label in the
+> outcome-history features. The fix (outcome event time = max(delivery, approval), see `src/olist_risk/features.py`,
+> brute-force check now includes all 61 edge cases) was applied, and the whole pipeline was **re-run locally on the project
+> machine** with the pinned versions. All numbers, notebooks, screenshots, the report and the daily list in this repository
+> come from that final run. Old → new: logistic regression on test 70 → 71 late orders identified, LightGBM 58 → 60,
+> validation 256 → 255, CI 20–55 → 21–56; rules and random are unchanged. **The Studio space still holds the pre-fix copy**;
+> update it with `cd ~/ml-project2-v2 && git pull` (if cloned) or
+> `aws s3 sync s3://ml-project2-olist-044450716277/ml-project2-v2/studio-v2-fixed/ ~/ml-project2-v2/` and re-run `run_all.py`.
 
 ## Problem formulation (short)
 | Item | Decision |
@@ -36,6 +47,7 @@ Each method investigates the top 10 orders per day (869 investigations; 2 days h
 | Splits (approval date) | train 2017-01-01→2018-02-28 · validation 2018-03-01→2018-05-31 · test 2018-06-01→2018-08-31 |
 | Label maturity | training rows must be approved ≥60 days before the cutoff and have their outcome observed before it |
 | Policy | each day, rank that day's approved orders by risk and investigate the top 10 (all of them if fewer) |
+| Edge case | 61 orders delivered before their own approval timestamp: an outcome is usable history only from max(delivery, approval) |
 
 ## Repository layout
 ```
@@ -54,7 +66,7 @@ E-Commerce-Delivery-Risk-Management/
 ├── notebooks/              00_setup_environment … 06_sensitivity_diagnostics (run in order)
 ├── aws/                    Studio lifecycle config + bootstrap script used for the SageMaker run
 ├── tools/                  notebook/report/guide builders, per-cell screenshot renderer
-├── docs/                   report, reproduction guide, tutorial, execution guide
+├── docs/                   report, guides, Medium post (+ medium_images/)
 ├── screenshots/            one PNG per executed notebook cell
 ├── data/raw/               the 9 Olist CSVs (NOT in this repo – get them from Kaggle or S3)
 ├── data/processed/         labels.pkl, features.pkl (created by notebooks 02/03)
@@ -68,19 +80,19 @@ E-Commerce-Delivery-Risk-Management/
    `ajay-uppu` → **Launch → Studio**.
 2. In Studio choose **JupyterLab** → open the space `mlproj2-ecommerce-space` (ml.m5.xlarge) → **Open JupyterLab**
    (click **Run space** first if it is stopped).
-3. In the file browser open `ml-project2-v2/`. The notebooks there already contain the outputs of the Studio run.
+3. In the file browser open `ml-project2-v2/`. The notebooks there already contain the outputs of the original (pre-fix) Studio run; update them as described in the note above.
 4. To re-run: open a Terminal (File → New → Terminal) and run
    `bash ~/ml-project2-v2/aws/studio_bootstrap.sh --no-run` (creates the `.venv`, installs `requirements.txt`,
    registers the kernel **Python (ml-project2-v2)** and downloads the raw CSVs from S3).
    If the project folder is missing in a new space, copy the code bundle from S3 first:
    `aws s3 sync s3://ml-project2-olist-044450716277/ml-project2-v2/studio/ ~/ml-project2-v2/`.
-   To copy the finished documentation (report, guides, tutorial) into the Studio space:
+   To copy the finished documentation (report, guides, Medium post) into the Studio space:
    `aws s3 sync s3://ml-project2-olist-044450716277/ml-project2-v2/deliverables/docs/ ~/ml-project2-v2/docs/`.
    Alternatively clone this repository in a Studio terminal: `git clone https://github.com/Ajayuppu/E-Commerce-Delivery-Risk-Management.git ~/ml-project2-v2`
    and put the 9 Olist CSVs into `data/raw/`.
 5. Open each notebook in order (00 → 06), make sure the kernel at the top right is **Python (ml-project2-v2)**,
    and use **Run → Run All Cells**. Or run everything at once from the terminal:
-   `cd ~/ml-project2-v2 && .venv/bin/python run_all.py` (≈5 min; the submitted run took 283 s for all notebooks on ml.m5.large, the space was afterwards switched to ml.m5.xlarge).
+   `cd ~/ml-project2-v2 && .venv/bin/python run_all.py` (≈5–10 min; the original Studio run took 283 s on ml.m5.large, the space was afterwards switched to ml.m5.xlarge).
 
 ### B. Anywhere else (laptop / other notebook)
 ```bash
@@ -92,14 +104,21 @@ python run_all.py
 ```
 `NB_KERNEL=python3 python run_all.py` uses a different kernel name if needed.
 
+### Determinism
+Seeds are fixed (42), LightGBM runs with `deterministic=True`, and logistic regression uses `max_iter=20000, tol=1e-8` so
+the solver converges fully. Two consecutive full runs on the same machine produced byte-identical result tables (only the
+`fit_seconds` timing column differs). Across different machines (CPU / BLAS build), weakly regularised logistic-regression
+configurations that were *not* selected (C = 1.0 / 0.1) can still move by one or two validation hits; the selected
+configuration and every reported number were unaffected in the cross-machine check.
+
 ## Documentation
 * [Final report (PDF)](docs/ML_Project2_Final_Report.pdf) · [DOCX](docs/ML_Project2_Final_Report.docx)
-* [Reproduction guide](docs/REPRODUCTION_GUIDE.md) · [Medium-style tutorial](docs/MEDIUM_TUTORIAL.md)
+* [Reproduction guide](docs/REPRODUCTION_GUIDE.md) · [Medium post](docs/medium_post.md)
 * [Step-by-step execution guide with per-cell screenshots (DOCX)](docs/ML_Project2_Step_by_Step_Execution_Guide.docx)
 * `docs/ML_Project2_Final_Report.docx/.pdf` – final report (main text + appendices incl. compliance checklist).
 * `docs/REPRODUCTION_GUIDE.md/.docx` – cell-by-cell run guide with expected outputs and troubleshooting.
-* `docs/MEDIUM_TUTORIAL.md/.docx` – hands-on tutorial write-up.
-* `screenshots/` – one PNG per executed notebook cell (code + real output from the SageMaker run).
+* `docs/medium_post.md` / `medium_post.html` / `medium_post.docx` – hands-on Medium post (replaces the earlier MEDIUM_TUTORIAL; images in `docs/medium_images/`, AWS account number blurred in screenshots; built by `tools/build_medium.py`).
+* `screenshots/` – one PNG per executed notebook cell (code + real output from the final local re-run after the leakage fix).
 
 ## Main outputs
 * `outputs/daily_prioritization_test.csv` – the 10-per-day investigation list for the test period
@@ -107,7 +126,7 @@ python run_all.py
 * `outputs/experiment_configs.json` – splits, grids, selected hyper-parameters, library versions.
 * `outputs/tables/03_feature_availability_audit.csv` – feature-availability audit.
 * `outputs/tables/02_split_summary.csv`, `02_eligibility_funnel.csv` – modeling examples and outcomes.
-* `outputs/tables/04_validation_*.csv`, `05_test_*.csv`, `06_*.csv` – comparisons and diagnostics.
+* `outputs/tables/04_validation_*.csv`, `05_test_*.csv`, `05_censoring_sensitivity.csv`, `06_*.csv` – comparisons and diagnostics.
 
 ## Data
 The raw Olist CSVs are **not** included (see `.gitignore`). Download the *Brazilian E-Commerce Public Dataset by Olist*

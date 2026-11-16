@@ -226,8 +226,8 @@
         "class_weight": null
       },
       "feature_set": "no_market",
-      "val_late_identified": 256,
-      "val_pr_auc": 0.2008
+      "val_late_identified": 255,
+      "val_pr_auc": 0.2011
     },
     "lgbm": {
       "params": {
@@ -238,7 +238,7 @@
       },
       "feature_set": "all",
       "val_late_identified": 227,
-      "val_pr_auc": 0.1956
+      "val_pr_auc": 0.1958
     }
   },
   "proposed_model": "logreg",

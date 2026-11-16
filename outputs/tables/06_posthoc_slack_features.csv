@@ -1,6 +1,6 @@
 model,features,val_late_identified,test_late_identified,test_pr_auc
-logreg,selected feature set,256,70,0.06752513583038595
-logreg,selected feature set + slack features (post-hoc),251,72,0.06774771337900451
-lgbm,selected feature set,227,58,0.052236787247505516
-lgbm,selected feature set + slack features (post-hoc),245,49,0.051949982150885504
-rule_smallest_route_slack,non-ML rule (post-hoc),116,73,0.13502906760513014
+logreg,selected feature set,255,71,0.0674452200462151
+logreg,selected feature set + slack features (post-hoc),250,72,0.06775685082797944
+lgbm,selected feature set,227,60,0.0510762500686033
+lgbm,selected feature set + slack features (post-hoc),239,48,0.05125318702270811
+rule_smallest_route_slack,non-ML rule (post-hoc),116,73,0.1350241836659436

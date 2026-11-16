@@ -183,7 +183,7 @@
   "notebook": "03_feature_engineering.ipynb",
   "code_cell": 5,
   "file": "03_feature_engineering__cell05.png",
-  "first_line": "# Cell 5 - leakage unit test: recompute seller/customer history by brute force for 300 random orders"
+  "first_line": "# Cell 5 - leakage unit test: brute-force recompute of seller/customer history for 300 random orders"
  },
  {
   "notebook": "03_feature_engineering.ipynb",

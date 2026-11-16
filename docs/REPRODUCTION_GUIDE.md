@@ -3,7 +3,9 @@
 **Project:** E-Commerce Delivery Risk Management (Olist) · **Author:** Ajay Uppu (GSU, MS Data Science)  
 **AWS:** account 044450716277, region us-east-1 · domain `machinelearningproj2ajay-ecommerce` (d-hfxnlufab81e) · user profile `ajay-uppu` · JupyterLab space `mlproj2-ecommerce-space` (ml.m5.xlarge, 20 GB EBS) · kernel **Python (ml-project2-v2)**
 
-This guide tells you exactly which notebook and which cell to run, in which order, what each cell does, and the output you should see. All expected values below are copied from the real execution inside the SageMaker Studio space (2026-11-15, 21:48–21:54 ET). If your numbers match, your run is a faithful reproduction.
+This guide tells you exactly which notebook and which cell to run, in which order, what each cell does, and the output you should see. All expected values below are copied from the FINAL run: a full local re-run of notebooks 00–06 (same pinned libraries) on 2026-11-15 after an audit fixed a small leakage edge case (61 orders delivered before their own approval timestamp could see their own label in the history features; outcome event time is now max(delivery, approval)). If your numbers match, your run is a faithful reproduction.
+
+> **Studio copy is pre-fix.** The space `mlproj2-ecommerce-space` still holds the earlier (pre-fix) Studio run, whose headline numbers differ slightly (logistic regression 70 instead of 71 late orders identified on test). To update it, open a Terminal in JupyterLab and run either `cd ~/ml-project2-v2 && git pull` (if you cloned the GitHub repo) or `aws s3 sync s3://ml-project2-olist-044450716277/ml-project2-v2/studio-v2-fixed/ ~/ml-project2-v2/`, then `.venv/bin/python run_all.py`.
 
 ## 1. What is already set up for you
 
@@ -28,7 +30,7 @@ This guide tells you exactly which notebook and which cell to run, in which orde
 1. Search for **Amazon SageMaker AI** → left menu **Admin configurations → Domains** → click `machinelearningproj2ajay-ecommerce`.
 1. Tab **User profiles** → row `ajay-uppu` → **Launch** ▸ **Studio**. Studio opens in a new browser tab.
 1. In Studio's left bar click **JupyterLab** → you will see the space `mlproj2-ecommerce-space`. If its status is *Stopped*, click **Run space** and wait about 1–2 minutes; then click **Open**.
-1. In JupyterLab's file browser (left) double-click `ml-project2-v2` → `notebooks`. The seven notebooks already contain the outputs of the SageMaker run.
+1. In JupyterLab's file browser (left) double-click `ml-project2-v2` → `notebooks`. The seven notebooks already contain the outputs of the original (pre-fix) SageMaker run; update the folder first as described in the note above if you want the final numbers.
 
 ## 3. Prepare the environment (only needed for a fresh space)
 
@@ -86,7 +88,7 @@ cd ~/ml-project2-v2 && .venv/bin/python run_all.py
 
 - *What it does:* Prints the Python version and compares every library pinned in requirements.txt with the version installed in the kernel.
 - *Why:* Results are only reproducible with the same library versions (e.g. scikit-learn 1.6.1, LightGBM 4.6.0).
-- *Expected output:* python 3.12.x and a table where every row has ok = True. Any False means the kernel is not 'Python (ml-project2-v2)'.
+- *Expected output:* python 3.12.x in Studio (3.13.x on the final local re-run) and a table where every row has ok = True. Any False means the kernel is not 'Python (ml-project2-v2)'.
 - *Screenshot:* `screenshots/00_setup_environment__cell02.png`
 
 **Cell 3 – install the pinned versions only if something is missing/different**
@@ -151,7 +153,7 @@ cd ~/ml-project2-v2 && .venv/bin/python run_all.py
 
 - *What it does:* Checks the order lifecycle timestamps for missing and inconsistent values.
 - *Why:* Defines which outcomes are usable and shows that post-approval dates (carrier pickup) are noisy.
-- *Expected output:* 160 orders without approval, 2,965 without customer delivery, 0 promised dates with a time of day (all midnight), approvals from 2016-09-15 to 2018-09-03.
+- *Expected output:* 160 orders without approval, 2,965 without customer delivery, 61 delivered before their own approval timestamp, 0 promised dates with a time of day (all midnight), approvals from 2016-09-15 to 2018-09-03.
 - *Screenshot:* `screenshots/01_data_audit__cell05.png`
 
 **Cell 6 – order status distribution (final status at data export - an OUTCOME, never a feature)**
@@ -291,11 +293,11 @@ cd ~/ml-project2-v2 && .venv/bin/python run_all.py
 - *Expected output:* A table listing timing, basket, payment, geography and history features as used, and order_status, carrier date, reviews as excluded.
 - *Screenshot:* `screenshots/03_feature_engineering__cell04.png`
 
-**Cell 5 – leakage unit test: recompute seller/customer history by brute force for 300 random orders**
+**Cell 5 – leakage unit test: brute-force recompute of seller/customer history for 300 random orders**
 
-- *What it does:* Leakage unit test: recomputes seller and customer history for 300 random orders by brute force.
+- *What it does:* Leakage unit test: recomputes seller and customer history by brute force for 300 random orders plus all 61 orders whose delivery timestamp precedes their own approval (the edge case that could leak an order's own label).
 - *Why:* Independent proof that history features use only outcomes delivered before approval and never the order's own outcome.
-- *Expected output:* All four checks = 1.0 (100%).
+- *Expected output:* orders checked: 361 (300 random + 61 delivered-before-approval edge cases); all four checks = 1.0 (100%).
 - *Screenshot:* `screenshots/03_feature_engineering__cell05.png`
 
 **Cell 6 – missing values per predictor (handled by median/constant imputation + missing indicators)**
@@ -360,21 +362,21 @@ cd ~/ml-project2-v2 && .venv/bin/python run_all.py
 
 - *What it does:* Grid search: 2 feature sets × (6 logistic-regression + 12 LightGBM configurations), each fit on train and scored on validation.
 - *Why:* Model, hyper-parameter and feature-set selection use validation only; the test period is untouched.
-- *Expected output:* '36 configurations evaluated' and the top-10 table led by logreg no_market C=0.01 (256 late identified). Takes 2–3 minutes.
+- *Expected output:* '36 configurations evaluated' and the top-10 table led by logreg no_market C=0.01 (255 late identified). Takes 2–3 minutes.
 - *Screenshot:* `screenshots/04_modeling__cell04.png`
 
 **Cell 5 – best configuration per model family (selected on validation only)**
 
 - *What it does:* Picks the best configuration per model family.
 - *Why:* Selection criterion = late orders captured by the daily top-10 (the business metric), tie-break PR-AUC.
-- *Expected output:* logreg (no_market, C=0.01) 256 / PR-AUC 0.2008; lgbm (all, 7 leaves, 200 trees, min_child_samples 400) 227 / 0.1956 → proposed model: logreg.
+- *Expected output:* logreg (no_market, C=0.01) 255 / PR-AUC 0.2011; lgbm (all, 7 leaves, 200 trees, min_child_samples 400) 227 / 0.1958 → proposed model: logreg.
 - *Screenshot:* `screenshots/04_modeling__cell05.png`
 
 **Cell 6 – validation comparison table: rules vs learned models under the same daily cap**
 
 - *What it does:* Validation comparison table of rules and learned models.
 - *Why:* Main validation evidence for the report (Table 6).
-- *Expected output:* logreg 256 > lgbm 227 > longest distance 202 > … > random 87.8 > shortest promise 46.
+- *Expected output:* logreg 255 > lgbm 227 > longest distance 202 > … > random 87.8 > shortest promise 46.
 - *Screenshot:* `screenshots/04_modeling__cell06.png`
 
 **Cell 7 – final refit of the selected configurations on train+validation (labels mature before TEST_START)**
@@ -418,28 +420,28 @@ cd ~/ml-project2-v2 && .venv/bin/python run_all.py
 
 - *What it does:* Runs the daily top-10 simulation for every method and random (200 draws).
 - *Why:* Core operational result: identified late orders, unnecessary investigations, undetermined, missed.
-- *Expected output:* logreg 70 identified / 780 unnecessary / 19 undetermined / 602 missed; lgbm 58; shortest promise 80; longest distance 34; random 26.45; 869 investigations each; perfect foresight 437.
+- *Expected output:* logreg 71 identified / 779 unnecessary / 19 undetermined / 601 missed; lgbm 60; shortest promise 80; longest distance 34; random 26.45; 869 investigations each; perfect foresight 437.
 - *Screenshot:* `screenshots/05_daily_policy_evaluation__cell04.png`
 
 **Cell 5 – predictive metrics on the labelled test orders**
 
 - *What it does:* Predictive metrics on labelled test orders.
 - *Why:* PR-AUC/ROC-AUC are threshold-free and suited to the 3.6% positive rate.
-- *Expected output:* logreg PR-AUC 0.0675, ROC-AUC 0.6244; lgbm 0.0522 / 0.6234; shortest-promise rule 0.1309 / 0.7459.
+- *Expected output:* logreg PR-AUC 0.0674, ROC-AUC 0.6250; lgbm 0.0511 / 0.6207; shortest-promise rule 0.1309 / 0.7459.
 - *Screenshot:* `screenshots/05_daily_policy_evaluation__cell05.png`
 
 **Cell 6 – headline: proposed model vs reference rule vs random**
 
 - *What it does:* Headline table: proposed model vs reference rule vs random.
 - *Why:* The comparison requested by the assignment under the same capacity.
-- *Expected output:* 'logreg: 70 late orders identified vs 34 for rule_longest_distance and 26.4 expected at random, using 869 investigations.'
+- *Expected output:* 'logreg: 71 late orders identified vs 34 for rule_longest_distance and 26.4 expected at random, using 869 investigations.'
 - *Screenshot:* `screenshots/05_daily_policy_evaluation__cell06.png`
 
 **Cell 7 – paired daily comparison: on how many days did the model beat / tie / lose to the rule?**
 
 - *What it does:* Paired daily comparison with a day-level bootstrap.
 - *Why:* Quantifies uncertainty of the model-vs-rule difference.
-- *Expected output:* model better on 30 days, equal on 52, worse on 6; +36 late orders (95% CI 20 .. 55).
+- *Expected output:* model better on 30 days, equal on 52, worse on 6; +37 late orders (95% CI 21 .. 56).
 - *Screenshot:* `screenshots/05_daily_policy_evaluation__cell07.png`
 
 **Cell 8 – cumulative late orders identified over the test period**
@@ -467,7 +469,7 @@ cd ~/ml-project2-v2 && .venv/bin/python run_all.py
 
 - *What it does:* Reports how days with <10 orders and undetermined outcomes were handled.
 - *Why:* Required by the assignment (section 4D).
-- *Expected output:* 88 days, 2 days with <10 approved orders, 869 of 880 possible investigations, 19 selected orders undetermined.
+- *Expected output:* 88 days, 2 days with <10 approved orders, 869 of 880 possible investigations, 19 selected orders undetermined. Censoring check: 191 of the 315 undetermined test orders were still open and past their promised date at the data export (2018-10-17); counting them as problems gives logreg 86, shortest-promise rule 89, longest-distance rule 45 (outputs/tables/05_censoring_sensitivity.csv).
 - *Screenshot:* `screenshots/05_daily_policy_evaluation__cell11.png`
 
 ### Notebook 06 – Sensitivity analysis and diagnostics (`06_sensitivity_diagnostics.ipynb`)
@@ -490,21 +492,21 @@ cd ~/ml-project2-v2 && .venv/bin/python run_all.py
 
 - *What it does:* Budget sensitivity for k = 5, 10, 20, 50 investigations per day (Figure 06a).
 - *Why:* Shows the trade-off between capacity and precision.
-- *Expected output:* logreg 45 / 70 / 105 / 181 late identified; precision 0.103 / 0.081 / 0.061 / 0.042.
+- *Expected output:* logreg 45 / 71 / 105 / 181 late identified; precision 0.103 / 0.082 / 0.061 / 0.042.
 - *Screenshot:* `screenshots/06_sensitivity_diagnostics__cell03.png`
 
 **Cell 4 – performance by month of the test period (10/day)**
 
 - *What it does:* Performance by test month.
 - *Why:* Detects time periods where the model fails.
-- *Expected output:* June lift 3.8, July 4.4, August 0.99 (ROC-AUC 0.51) for logreg.
+- *Expected output:* June lift 3.8, July 4.4, August 1.04 (ROC-AUC 0.51) for logreg.
 - *Screenshot:* `screenshots/06_sensitivity_diagnostics__cell04.png`
 
 **Cell 5 – failure groups: where are late orders missed? (customer state)**
 
 - *What it does:* Failure groups by customer state.
 - *Why:* Shows where late orders are missed and where false alarms concentrate.
-- *Expected output:* SP: 405 late, 11 identified (2.7%); RJ: 381 selections, 352 false alarms; MA: 13 of 14 identified.
+- *Expected output:* SP: 405 late, 11 identified (2.7%); RJ: 382 selections, 353 false alarms; MA: 13 of 14 identified.
 - *Screenshot:* `screenshots/06_sensitivity_diagnostics__cell05.png`
 
 **Cell 6 – failure groups by product category (top 15 by late orders)**
@@ -518,7 +520,7 @@ cd ~/ml-project2-v2 && .venv/bin/python run_all.py
 
 - *What it does:* Profiles caught, missed and false-alarm orders.
 - *Why:* Explains why misses happen: short routes with good history look safe at approval.
-- *Expected output:* median distance 1,670 km (hits) vs 109 km (missed) vs 808 km (false alarms).
+- *Expected output:* median distance 1,670 km (hits) vs 109 km (missed) vs 805 km (false alarms).
 - *Screenshot:* `screenshots/06_sensitivity_diagnostics__cell07.png`
 
 **Cell 8 – model drivers: logistic-regression coefficients and LightGBM gain importance**
@@ -539,28 +541,28 @@ cd ~/ml-project2-v2 && .venv/bin/python run_all.py
 
 - *What it does:* Refit on train+validation vs model trained on train only.
 - *Why:* Justifies the final refit.
-- *Expected output:* logreg 62 → 70; lgbm 57 → 58 late identified.
+- *Expected output:* logreg 62 → 71; lgbm 56 → 60 late identified.
 - *Screenshot:* `screenshots/06_sensitivity_diagnostics__cell10.png`
 
 **Cell 11 – feature-group ablation for the proposed model family (refit on train+validation, test)**
 
 - *What it does:* Feature-group ablation (diagnostic only).
 - *Why:* Which feature groups carry the signal.
-- *Expected output:* all 67, no history 69, no market 70, history only 31.
+- *Expected output:* all 66, no history 69, no market 71, history only 31.
 - *Screenshot:* `screenshots/06_sensitivity_diagnostics__cell11.png`
 
 **Cell 12 – investigate fewer than 10 when risk is low? precision of the daily rank positions**
 
 - *What it does:* Precision by daily rank position.
 - *Why:* Should the team investigate fewer than 10 on some days?
-- *Expected output:* rank 1 late rate 13.6%, rank 2 12.5%, ranks 6–10 ≈5–7%, ranks 11–20 mostly ≤6%.
+- *Expected output:* rank 1 late rate 13.6%, rank 2 12.5%, ranks 6–10 ≈3–9%, ranks 11–20 mostly ≤8%.
 - *Screenshot:* `screenshots/06_sensitivity_diagnostics__cell12.png`
 
 **Cell 13 – post-hoc: slack features (validation first, then test)**
 
 - *What it does:* Post-hoc slack features (clearly labelled as test-informed).
 - *Why:* Tests the hypothesis suggested by the strong shortest-promise rule without changing the reported results.
-- *Expected output:* logreg + slack 251 (val) / 72 (test) vs 256 / 70; slack rule 116 (val) / 73 (test).
+- *Expected output:* logreg + slack 250 (val) / 72 (test) vs 255 / 71; slack rule 116 (val) / 73 (test).
 - *Screenshot:* `screenshots/06_sensitivity_diagnostics__cell13.png`
 
 **Cell 14 – summary of all saved outputs**
@@ -577,13 +579,16 @@ cd ~/ml-project2-v2 && .venv/bin/python run_all.py
 | Orders / approved / delivered status | 99,441 / 99,281 / 96,478 |
 | Late rate among delivered (calendar dates) | 6.77% (8.11% with raw timestamps) |
 | Train / validation / test candidate orders | 58,866 / 21,132 / 18,960 |
-| Rows used for fitting (train) / final refit | 43,276 / 64,109 |
+| Fit rows of model scored on validation / on test (final refit) | 43,276 / 64,109 |
+| Orders delivered before their own approval (edge case, brute-force checked) | 61 (leakage check: 361 orders, all 100%) |
 | Best rule on validation | longest distance – 202 late orders identified |
-| Selected model | logistic regression, C = 0.01, no class weights, feature set no_market (256 on validation) |
-| Test – logistic regression (10/day) | 70 late identified, 780 unnecessary, 19 undetermined, 602 missed (869 investigations) |
-| Test – LightGBM / longest-distance rule / random | 58 / 34 / 26.45 |
+| Selected model | logistic regression, C = 0.01, no class weights, feature set no_market (255 on validation) |
+| Test – logistic regression (10/day) | 71 late identified, 779 unnecessary, 19 undetermined, 601 missed (869 investigations) |
+| Test – LightGBM / longest-distance rule / random | 60 / 34 / 26.45 |
 | Test – shortest-promise rule (worst on validation) | 80 |
 | Perfect-foresight maximum | 437 |
+| Model vs reference rule (paired days) | +37 late orders, 95% day-bootstrap CI 21 to 56 |
+| Censoring check (open & overdue at export counted as problems) | 191 such test orders; logreg 86, shortest-promise rule 89, longest-distance rule 45 |
 | Rows in daily_prioritization_test.csv | 869 |
 
 ## 7. Troubleshooting
@@ -602,6 +607,13 @@ cd ~/ml-project2-v2 && .venv/bin/python run_all.py
 | Space will not start: ResourceLimitExceeded | Instance quota for Studio JupyterLab apps | Choose ml.t3.xlarge in the space settings, or request a quota increase in Service Quotas. |
 | Lifecycle script re-runs the pipeline on start | logs/RUN_DONE was deleted | Harmless (results are rewritten); recreate the file to prevent it: `date > ~/ml-project2-v2/logs/RUN_DONE`. |
 
-## 8. Studio screenshots you can add yourself
+## 8. What you will see in the Studio UI
 
-The per-cell screenshots in `screenshots/` were rendered from the notebooks executed in the space. Screens of the AWS console/Studio UI need your console sign-in: (1) Domains list showing machinelearningproj2ajay-ecommerce; (2) the domain's User profiles tab with ajay-uppu and Launch ▸ Studio; (3) Studio's JupyterLab page with mlproj2-ecommerce-space (Running, ml.m5.xlarge); (4) the JupyterLab file browser showing ml-project2-v2/notebooks; (5) a notebook open with the kernel Python (ml-project2-v2); (6) a Terminal running the bootstrap.
+The per-cell screenshots in `screenshots/` are rendered from the executed notebooks of the final run (code + real output). The Studio screens themselves look like this, in order:
+
+1. **Domains list** (SageMaker AI → Admin configurations → Domains): the row `machinelearningproj2ajay-ecommerce` with status **InService**.
+1. **Domain details → User profiles tab**: the row `ajay-uppu`; the **Launch** button on that row opens a menu – choose **Studio**.
+1. **Studio home → JupyterLab** (left bar): a card/row for `mlproj2-ecommerce-space`, instance **ml.m5.xlarge**, status **Running** (or **Stopped** with a **Run space** button). Click **Open**.
+1. **JupyterLab file browser** (left panel): folder `ml-project2-v2` containing `notebooks/`, `src/`, `outputs/`, `docs/`, `data/`, `aws/`, `run_all.py`, `requirements.txt`.
+1. **An open notebook**: the kernel name **Python (ml-project2-v2)** at the top right; a filled circle next to it means a cell is running, an empty circle means idle.
+1. **Terminal** (File → New → Terminal): a bash prompt in `/home/sagemaker-user`; `bash ~/ml-project2-v2/aws/studio_bootstrap.sh --no-run` prints the install steps and ends with `environment ready`.

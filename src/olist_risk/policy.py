@@ -88,3 +88,14 @@ def daily_breakdown(pool, score_col, k=config.DAILY_CAPACITY):
         "unnecessary": g.apply(lambda x: ((x.outcome_status == "on_time") & x.selected).sum(), include_groups=False),
         "undetermined_selected": g.apply(lambda x: ((x.outcome_status == "undetermined") & x.selected).sum(), include_groups=False),
     }).reset_index()
+
+
+def censoring_adjusted_status(pool, export_ts):
+    """Sensitivity view of incomplete outcomes (right-censoring at the data export).
+    An order with NO customer-delivery date that is still open at export (status shipped/invoiced/
+    processing/approved/created, i.e. not canceled/unavailable and not marked delivered) and whose
+    promised date had already passed when the data were exported is at least overdue -> counted as a delivery problem ('late'). Everything else unchanged."""
+    open_overdue = ((pool.outcome_status == "undetermined")
+                    & pool.order_status.isin(["shipped", "invoiced", "processing", "approved", "created"])
+                    & (pool.order_estimated_delivery_date.dt.normalize() < pd.Timestamp(export_ts).normalize()))
+    return pool.outcome_status.where(~open_overdue, "late"), open_overdue

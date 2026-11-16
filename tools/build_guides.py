@@ -19,8 +19,15 @@ A("**AWS:** account 044450716277, region us-east-1 · domain `machinelearningpro
   "user profile `ajay-uppu` · JupyterLab space `mlproj2-ecommerce-space` (ml.m5.xlarge, 20 GB EBS) · kernel **Python (ml-project2-v2)**")
 A("")
 A("This guide tells you exactly which notebook and which cell to run, in which order, what each cell does, and the output "
-  "you should see. All expected values below are copied from the real execution inside the SageMaker Studio space "
-  "(2026-11-15, 21:48–21:54 ET). If your numbers match, your run is a faithful reproduction.")
+  "you should see. All expected values below are copied from the FINAL run: a full local re-run of notebooks 00–06 (same pinned "
+  "libraries) on 2026-11-15 after an audit fixed a small leakage edge case (61 orders delivered before their own approval timestamp "
+  "could see their own label in the history features; outcome event time is now max(delivery, approval)). If your numbers match, "
+  "your run is a faithful reproduction.")
+A("")
+A("> **Studio copy is pre-fix.** The space `mlproj2-ecommerce-space` still holds the earlier (pre-fix) Studio run, whose headline "
+  "numbers differ slightly (logistic regression 70 instead of 71 late orders identified on test). To update it, open a Terminal in "
+  "JupyterLab and run either `cd ~/ml-project2-v2 && git pull` (if you cloned the GitHub repo) or "
+  "`aws s3 sync s3://ml-project2-olist-044450716277/ml-project2-v2/studio-v2-fixed/ ~/ml-project2-v2/`, then `.venv/bin/python run_all.py`.")
 A("")
 A("## 1. What is already set up for you")
 A("")
@@ -51,7 +58,7 @@ for s in [
     "Search for **Amazon SageMaker AI** → left menu **Admin configurations → Domains** → click `machinelearningproj2ajay-ecommerce`.",
     "Tab **User profiles** → row `ajay-uppu` → **Launch** ▸ **Studio**. Studio opens in a new browser tab.",
     "In Studio's left bar click **JupyterLab** → you will see the space `mlproj2-ecommerce-space`. If its status is *Stopped*, click **Run space** and wait about 1–2 minutes; then click **Open**.",
-    "In JupyterLab's file browser (left) double-click `ml-project2-v2` → `notebooks`. The seven notebooks already contain the outputs of the SageMaker run.",
+    "In JupyterLab's file browser (left) double-click `ml-project2-v2` → `notebooks`. The seven notebooks already contain the outputs of the original (pre-fix) SageMaker run; update the folder first as described in the note above if you want the final numbers.",
 ]:
     A(f"1. {s}")
 A("")
@@ -118,13 +125,16 @@ for a, b in [
     ("Orders / approved / delivered status", "99,441 / 99,281 / 96,478"),
     ("Late rate among delivered (calendar dates)", "6.77% (8.11% with raw timestamps)"),
     ("Train / validation / test candidate orders", "58,866 / 21,132 / 18,960"),
-    ("Rows used for fitting (train) / final refit", "43,276 / 64,109"),
+    ("Fit rows of model scored on validation / on test (final refit)", "43,276 / 64,109"),
+    ("Orders delivered before their own approval (edge case, brute-force checked)", "61 (leakage check: 361 orders, all 100%)"),
     ("Best rule on validation", "longest distance – 202 late orders identified"),
-    ("Selected model", "logistic regression, C = 0.01, no class weights, feature set no_market (256 on validation)"),
-    ("Test – logistic regression (10/day)", "70 late identified, 780 unnecessary, 19 undetermined, 602 missed (869 investigations)"),
-    ("Test – LightGBM / longest-distance rule / random", "58 / 34 / 26.45"),
+    ("Selected model", "logistic regression, C = 0.01, no class weights, feature set no_market (255 on validation)"),
+    ("Test – logistic regression (10/day)", "71 late identified, 779 unnecessary, 19 undetermined, 601 missed (869 investigations)"),
+    ("Test – LightGBM / longest-distance rule / random", "60 / 34 / 26.45"),
     ("Test – shortest-promise rule (worst on validation)", "80"),
     ("Perfect-foresight maximum", "437"),
+    ("Model vs reference rule (paired days)", "+37 late orders, 95% day-bootstrap CI 21 to 56"),
+    ("Censoring check (open & overdue at export counted as problems)", "191 such test orders; logreg 86, shortest-promise rule 89, longest-distance rule 45"),
     ("Rows in daily_prioritization_test.csv", "869"),
 ]:
     A(f"| {a} | {b} |")
@@ -148,13 +158,20 @@ for a, b, c in [
 ]:
     A(f"| {a} | {b} | {c} |")
 A("")
-A("## 8. Studio screenshots you can add yourself")
+A("## 8. What you will see in the Studio UI")
 A("")
-A("The per-cell screenshots in `screenshots/` were rendered from the notebooks executed in the space. Screens of the AWS "
-  "console/Studio UI need your console sign-in: (1) Domains list showing machinelearningproj2ajay-ecommerce; (2) the domain's "
-  "User profiles tab with ajay-uppu and Launch ▸ Studio; (3) Studio's JupyterLab page with mlproj2-ecommerce-space (Running, ml.m5.xlarge); "
-  "(4) the JupyterLab file browser showing ml-project2-v2/notebooks; (5) a notebook open with the kernel Python (ml-project2-v2); "
-  "(6) a Terminal running the bootstrap.")
+A("The per-cell screenshots in `screenshots/` are rendered from the executed notebooks of the final run (code + real output). "
+  "The Studio screens themselves look like this, in order:")
+A("")
+for s in [
+    "**Domains list** (SageMaker AI → Admin configurations → Domains): the row `machinelearningproj2ajay-ecommerce` with status **InService**.",
+    "**Domain details → User profiles tab**: the row `ajay-uppu`; the **Launch** button on that row opens a menu – choose **Studio**.",
+    "**Studio home → JupyterLab** (left bar): a card/row for `mlproj2-ecommerce-space`, instance **ml.m5.xlarge**, status **Running** (or **Stopped** with a **Run space** button). Click **Open**.",
+    "**JupyterLab file browser** (left panel): folder `ml-project2-v2` containing `notebooks/`, `src/`, `outputs/`, `docs/`, `data/`, `aws/`, `run_all.py`, `requirements.txt`.",
+    "**An open notebook**: the kernel name **Python (ml-project2-v2)** at the top right; a filled circle next to it means a cell is running, an empty circle means idle.",
+    "**Terminal** (File → New → Terminal): a bash prompt in `/home/sagemaker-user`; `bash ~/ml-project2-v2/aws/studio_bootstrap.sh --no-run` prints the install steps and ends with `environment ready`.",
+]:
+    A(f"1. {s}")
 (DOCS / "REPRODUCTION_GUIDE.md").write_text("\n".join(L), encoding="utf-8")
 md_to_docx(DOCS / "REPRODUCTION_GUIDE.md", DOCS / "REPRODUCTION_GUIDE.docx")
 print("ok", len(L))

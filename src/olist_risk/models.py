@@ -32,7 +32,7 @@ def make_logreg(C=1.0, class_weight=None, num_features=NUM_FEATURES, cat_feature
         ("cat", Pipeline([("imp", SimpleImputer(strategy="constant", fill_value="missing")),
                           ("oh", OneHotEncoder(handle_unknown="infrequent_if_exist", min_frequency=50))]), cat_features),
     ])
-    return Pipeline([("pre", pre), ("clf", LogisticRegression(C=C, class_weight=class_weight, max_iter=3000,
+    return Pipeline([("pre", pre), ("clf", LogisticRegression(C=C, class_weight=class_weight, max_iter=20000, tol=1e-8,
                                                               solver="lbfgs", random_state=config.SEED))])
 
 

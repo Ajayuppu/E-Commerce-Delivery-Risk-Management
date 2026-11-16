@@ -89,6 +89,7 @@ def audit_order_dates(o):
         "status!=delivered but delivered_customer present": int(((o.order_status != "delivered") & o.order_delivered_customer_date.notna()).sum()),
         "delivered to customer before carrier pickup": int((o.order_delivered_customer_date < o.order_delivered_carrier_date).sum()),
         "carrier pickup before approval": int((o.order_delivered_carrier_date < o.order_approved_at).sum()),
+        "delivered to customer before approval": int((o.order_delivered_customer_date < o.order_approved_at).sum()),
         "estimated delivery has a time-of-day (non-midnight)": int((o.order_estimated_delivery_date.dt.hour != 0).sum()),
         "purchase range": f"{o.order_purchase_timestamp.min()} .. {o.order_purchase_timestamp.max()}",
         "approval range": f"{o.order_approved_at.min()} .. {o.order_approved_at.max()}",
