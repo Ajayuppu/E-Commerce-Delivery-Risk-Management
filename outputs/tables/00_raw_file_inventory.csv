@@ -1,0 +1,10 @@
+table,file,size_MB,rows
+orders,olist_orders_dataset.csv,17.65,99441
+items,olist_order_items_dataset.csv,15.44,112650
+customers,olist_customers_dataset.csv,9.03,99441
+sellers,olist_sellers_dataset.csv,0.17,3095
+products,olist_products_dataset.csv,2.38,32951
+payments,olist_order_payments_dataset.csv,5.78,103886
+reviews,olist_order_reviews_dataset.csv,14.45,104719
+geolocation,olist_geolocation_dataset.csv,61.27,1000163
+translation,product_category_name_translation.csv,0.0,71

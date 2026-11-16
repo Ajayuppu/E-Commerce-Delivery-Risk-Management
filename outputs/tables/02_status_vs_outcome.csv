@@ -1,0 +1,10 @@
+order_status,late,on_time,undetermined,All
+approved,0,0,2,2
+canceled,1,5,619,625
+created,0,0,5,5
+delivered,6534,89936,8,96478
+invoiced,0,0,314,314
+processing,0,0,301,301
+shipped,0,0,1107,1107
+unavailable,0,0,609,609
+All,6535,89941,2965,99441

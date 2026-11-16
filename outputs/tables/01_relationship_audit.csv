@@ -1,0 +1,18 @@
+check,value
+orders: unique order_id,True
+orders: customer_id unique per order (1:1),True
+orders without any item row,775
+orders without any payment row,1
+orders with >1 item row (join would multiply),9803
+max item rows per order,21
+orders with >1 seller,1278
+orders with >1 payment row,2961
+orders with >1 review row,547
+geolocation rows per zip prefix (median),29.0
+geolocation rows per zip prefix (max),1146
+customer zips missing from geolocation,278
+seller zips missing from geolocation,7
+products without category,610
+categories missing from translation,13
+items whose product_id not in products,0
+items whose seller_id not in sellers,0

@@ -1,0 +1,23 @@
+feature_or_field,source,observed_at,available_at_approval,used_as_predictor,how_computed_or_why_excluded
+approve_delay_hours,"orders.purchase, orders.approved_at",at/before approval,yes,yes,approved_at - purchase timestamp (h)
+promised_days,"orders.estimated_delivery_date, approved_at",at/before approval (promise shown at purchase),yes,yes,promised date - approval date (days)
+promised_days_from_purchase,"orders.estimated_delivery_date, purchase",at/before approval,yes,yes,promised date - purchase date (days)
+days_to_shipping_limit,order_items.shipping_limit_date,at/before approval (seller hand-over deadline set when order is placed/approved),yes,yes,max shipping_limit - approved_at (days); assumption documented
+approval_hour / approval_dow / is_weekend_approval / purchase_hour,orders timestamps,at/before approval,yes,yes,calendar parts
+"n_items, n_products, n_sellers, total_price, total_freight, freight_ratio, max_item_price",order_items (aggregated per order),at/before approval,yes,yes,sum/count/max per order BEFORE join
+"total_weight_g, max_weight_g, total_volume_cm3, category_missing, main_category",products + translation via items,at/before approval (catalogue attributes),yes,yes,main category = category of highest-priced item
+"payment_type_main, n_payment_rows, max_installments, payment_value, used_voucher",order_payments (aggregated),at/before approval (payment is what gets approved),yes,yes,aggregated per order BEFORE join
+"customer_state, seller_state, same_state, same_city","customers, sellers (main seller)",at/before approval,yes,yes,static location
+"customer/seller lat-lng, distance_km, geo_missing",geolocation (median per zip prefix),at/before approval,yes,yes,"zip-prefix medians, haversine distance"
+"seller_prior_orders, seller_orders_7d, seller_days_active",orders+items history,approvals strictly before this approval,yes,yes,cumulative counts by main seller
+"seller_prior_outcomes, seller_late_rate_sm",orders history,outcomes DELIVERED strictly before this approval,yes,yes,"smoothed late rate, m=20, prior = market rate known at that time"
+"seller_open_orders, seller_overdue_open, market_overdue_open",orders history,status as of approval time,yes,yes,orders approved earlier and not yet delivered (overdue = past promised date)
+customer_prior_orders,orders + customers.customer_unique_id,approvals strictly before,yes,yes,repeat-customer count
+"cust_state_late_rate_sm, route_late_rate_sm, category_late_rate_sm, market_late_rate_30d",orders history,outcomes delivered strictly before approval,yes,yes,smoothed historical late rates
+"route_mean_delivery_days, seller_mean_handling_days, market_mean_delivery_days_30d, slack_vs_route, slack_vs_market",orders history (carrier/customer dates of orders DELIVERED before approval),outcomes delivered strictly before approval,yes,post-hoc only,added after the final test run; used only in the labelled post-hoc analysis (notebook 06)
+order_status,orders,end of lifecycle (snapshot at data export),no,no,final status is a future outcome -> leakage
+order_delivered_carrier_date,orders,after approval (carrier pickup),no,no,post-approval event -> leakage
+order_delivered_customer_date,orders,after approval (delivery),no,label only,used ONLY to build is_late and outcome_known_at
+is_late / days_late,derived,after delivery,no,label only,target
+"review_score, review_comment_*, review_creation_date, review_answer_timestamp",order_reviews,after delivery (or after problems),no,no,post-outcome feedback -> leakage; not joined at all
+"customer_id (raw id), order_id, seller_id (raw id)",ids,at/before approval,yes,no,identifiers kept only for traceability/history keys

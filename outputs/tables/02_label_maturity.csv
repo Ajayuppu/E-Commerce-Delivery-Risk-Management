@@ -1,0 +1,6 @@
+days_after_approval,share_all_outcomes_known,share_late_outcomes_known
+15,0.7745,0.0825
+30,0.9595,0.5062
+45,0.9904,0.8641
+60,0.9971,0.9573
+90,0.9992,0.9884

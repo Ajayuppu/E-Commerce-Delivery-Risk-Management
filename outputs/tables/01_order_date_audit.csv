@@ -1,0 +1,12 @@
+check,value
+approved_at missing,160
+approved before purchase,0
+delivered_customer missing,2965
+status=delivered but delivered_customer missing,8
+status!=delivered but delivered_customer present,6
+delivered to customer before carrier pickup,23
+carrier pickup before approval,1359
+estimated delivery has a time-of-day (non-midnight),0
+purchase range,2016-09-04 21:15:19 .. 2018-10-17 17:30:18
+approval range,2016-09-15 12:16:38 .. 2018-09-03 17:40:06
+customer delivery range,2016-10-11 13:46:32 .. 2018-10-17 13:22:46

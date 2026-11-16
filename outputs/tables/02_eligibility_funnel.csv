@@ -1,0 +1,20 @@
+step,orders
+all orders in orders table,99441
+approved (has order_approved_at),99281
+approved in split=warmup_history_only,322
+approved in split=train,58866
+approved in split=validation,21132
+approved in split=test,18960
+approved in split=after_test,1
+train: outcome known (delivered),56883
+train: outcome undetermined,1983
+train: late,3740
+validation: outcome known (delivered),20662
+validation: outcome undetermined,470
+validation: late,2120
+test: outcome known (delivered),18645
+test: outcome undetermined,315
+test: late,672
+"train rows usable for fitting (approved >= 60d before VAL_START, outcome known before it)",43276
+train rows with outcome but not mature at VAL_START (not used for fitting),13607
+"train+val rows usable for final refit (approved >= 60d before TEST_START, outcome known before it)",64109

@@ -1,0 +1,416 @@
+[
+ {
+  "notebook": "00_setup_environment.ipynb",
+  "code_cell": 1,
+  "file": "00_setup_environment__cell01.png",
+  "first_line": "# Cell 1 - make the project package importable and define folders"
+ },
+ {
+  "notebook": "00_setup_environment.ipynb",
+  "code_cell": 2,
+  "file": "00_setup_environment__cell02.png",
+  "first_line": "# Cell 2 - Python and library versions actually used by this kernel"
+ },
+ {
+  "notebook": "00_setup_environment.ipynb",
+  "code_cell": 3,
+  "file": "00_setup_environment__cell03.png",
+  "first_line": "# Cell 3 - install the pinned versions only if something is missing/different"
+ },
+ {
+  "notebook": "00_setup_environment.ipynb",
+  "code_cell": 4,
+  "file": "00_setup_environment__cell04.png",
+  "first_line": "# Cell 4 - make sure the raw CSVs are present (download from S3 if missing)"
+ },
+ {
+  "notebook": "00_setup_environment.ipynb",
+  "code_cell": 5,
+  "file": "00_setup_environment__cell05.png",
+  "first_line": "# Cell 5 - verify the files: size and number of data rows"
+ },
+ {
+  "notebook": "00_setup_environment.ipynb",
+  "code_cell": 6,
+  "file": "00_setup_environment__cell06.png",
+  "first_line": "# Cell 6 - key configuration used by all notebooks"
+ },
+ {
+  "notebook": "01_data_audit.ipynb",
+  "code_cell": 1,
+  "file": "01_data_audit__cell01.png",
+  "first_line": "# Cell 1 - make the project package importable and define folders"
+ },
+ {
+  "notebook": "01_data_audit.ipynb",
+  "code_cell": 2,
+  "file": "01_data_audit__cell02.png",
+  "first_line": "# Cell 2 - load all raw tables (dates parsed, zip prefixes kept as 5-character strings)"
+ },
+ {
+  "notebook": "01_data_audit.ipynb",
+  "code_cell": 3,
+  "file": "01_data_audit__cell03.png",
+  "first_line": "# Cell 3 - table-level audit: primary keys, duplicates, missing cells"
+ },
+ {
+  "notebook": "01_data_audit.ipynb",
+  "code_cell": 4,
+  "file": "01_data_audit__cell04.png",
+  "first_line": "# Cell 4 - relationships: which joins are 1:1 and which would multiply orders"
+ },
+ {
+  "notebook": "01_data_audit.ipynb",
+  "code_cell": 5,
+  "file": "01_data_audit__cell05.png",
+  "first_line": "# Cell 5 - order lifecycle timestamps: missing values and inconsistencies"
+ },
+ {
+  "notebook": "01_data_audit.ipynb",
+  "code_cell": 6,
+  "file": "01_data_audit__cell06.png",
+  "first_line": "# Cell 6 - order status distribution (final status at data export - an OUTCOME, never a feature)"
+ },
+ {
+  "notebook": "01_data_audit.ipynb",
+  "code_cell": 7,
+  "file": "01_data_audit__cell07.png",
+  "first_line": "# Cell 7 - monthly volume of approved orders and the share delivered late (preview of the target)"
+ },
+ {
+  "notebook": "01_data_audit.ipynb",
+  "code_cell": 8,
+  "file": "01_data_audit__cell08.png",
+  "first_line": "# Cell 8 - basket structure: items, sellers and payments per order (why we aggregate before joining)"
+ },
+ {
+  "notebook": "01_data_audit.ipynb",
+  "code_cell": 9,
+  "file": "01_data_audit__cell09.png",
+  "first_line": "# Cell 9 - promised delivery window and actual delivery time (days) for delivered orders"
+ },
+ {
+  "notebook": "01_data_audit.ipynb",
+  "code_cell": 10,
+  "file": "01_data_audit__cell10.png",
+  "first_line": "# Cell 10 - reviews are written after delivery: proof that they cannot be approval-time features"
+ },
+ {
+  "notebook": "02_labels_and_eligibility.ipynb",
+  "code_cell": 1,
+  "file": "02_labels_and_eligibility__cell01.png",
+  "first_line": "# Cell 1 - make the project package importable and define folders"
+ },
+ {
+  "notebook": "02_labels_and_eligibility.ipynb",
+  "code_cell": 2,
+  "file": "02_labels_and_eligibility__cell02.png",
+  "first_line": "# Cell 2 - build labels and outcome status for every order"
+ },
+ {
+  "notebook": "02_labels_and_eligibility.ipynb",
+  "code_cell": 3,
+  "file": "02_labels_and_eligibility__cell03.png",
+  "first_line": "# Cell 3 - why calendar dates and not raw timestamps?"
+ },
+ {
+  "notebook": "02_labels_and_eligibility.ipynb",
+  "code_cell": 4,
+  "file": "02_labels_and_eligibility__cell04.png",
+  "first_line": "# Cell 4 - outcome status by final order status"
+ },
+ {
+  "notebook": "02_labels_and_eligibility.ipynb",
+  "code_cell": 5,
+  "file": "02_labels_and_eligibility__cell05.png",
+  "first_line": "# Cell 5 - chronological splits on the approval timestamp + eligibility funnel"
+ },
+ {
+  "notebook": "02_labels_and_eligibility.ipynb",
+  "code_cell": 6,
+  "file": "02_labels_and_eligibility__cell06.png",
+  "first_line": "# Cell 6 - label maturity: how long after approval do outcomes become known?"
+ },
+ {
+  "notebook": "02_labels_and_eligibility.ipynb",
+  "code_cell": 7,
+  "file": "02_labels_and_eligibility__cell07.png",
+  "first_line": "# Cell 7 - censoring bias illustrated: late rate of train orders by month, with and without the maturity rule"
+ },
+ {
+  "notebook": "02_labels_and_eligibility.ipynb",
+  "code_cell": 8,
+  "file": "02_labels_and_eligibility__cell08.png",
+  "first_line": "# Cell 8 - split summary (the 'modeling examples and outcomes' evidence table)"
+ },
+ {
+  "notebook": "02_labels_and_eligibility.ipynb",
+  "code_cell": 9,
+  "file": "02_labels_and_eligibility__cell09.png",
+  "first_line": "# Cell 9 - distribution of days late (late orders only)"
+ },
+ {
+  "notebook": "02_labels_and_eligibility.ipynb",
+  "code_cell": 10,
+  "file": "02_labels_and_eligibility__cell10.png",
+  "first_line": "# Cell 10 - save labels for the next notebooks"
+ },
+ {
+  "notebook": "03_feature_engineering.ipynb",
+  "code_cell": 1,
+  "file": "03_feature_engineering__cell01.png",
+  "first_line": "# Cell 1 - make the project package importable and define folders"
+ },
+ {
+  "notebook": "03_feature_engineering.ipynb",
+  "code_cell": 2,
+  "file": "03_feature_engineering__cell02.png",
+  "first_line": "# Cell 2 - load raw tables and labels"
+ },
+ {
+  "notebook": "03_feature_engineering.ipynb",
+  "code_cell": 3,
+  "file": "03_feature_engineering__cell03.png",
+  "first_line": "# Cell 3 - build the order-level feature table (one row per order)"
+ },
+ {
+  "notebook": "03_feature_engineering.ipynb",
+  "code_cell": 4,
+  "file": "03_feature_engineering__cell04.png",
+  "first_line": "# Cell 4 - feature-availability audit (also saved for the report)"
+ },
+ {
+  "notebook": "03_feature_engineering.ipynb",
+  "code_cell": 5,
+  "file": "03_feature_engineering__cell05.png",
+  "first_line": "# Cell 5 - leakage unit test: recompute seller/customer history by brute force for 300 random orders"
+ },
+ {
+  "notebook": "03_feature_engineering.ipynb",
+  "code_cell": 6,
+  "file": "03_feature_engineering__cell06.png",
+  "first_line": "# Cell 6 - missing values per predictor (handled by median/constant imputation + missing indicators)"
+ },
+ {
+  "notebook": "03_feature_engineering.ipynb",
+  "code_cell": 7,
+  "file": "03_feature_engineering__cell07.png",
+  "first_line": "# Cell 7 - univariate signal: late rate by decile of selected features (training rows only)"
+ },
+ {
+  "notebook": "03_feature_engineering.ipynb",
+  "code_cell": 8,
+  "file": "03_feature_engineering__cell08.png",
+  "first_line": "# Cell 8 - late rate by customer state (top 12 by volume, training rows)"
+ },
+ {
+  "notebook": "03_feature_engineering.ipynb",
+  "code_cell": 9,
+  "file": "03_feature_engineering__cell09.png",
+  "first_line": "# Cell 9 - descriptive statistics of the numeric predictors in the daily pool"
+ },
+ {
+  "notebook": "03_feature_engineering.ipynb",
+  "code_cell": 10,
+  "file": "03_feature_engineering__cell10.png",
+  "first_line": "# Cell 10 - save the modeling table"
+ },
+ {
+  "notebook": "04_modeling.ipynb",
+  "code_cell": 1,
+  "file": "04_modeling__cell01.png",
+  "first_line": "# Cell 1 - make the project package importable and define folders"
+ },
+ {
+  "notebook": "04_modeling.ipynb",
+  "code_cell": 2,
+  "file": "04_modeling__cell02.png",
+  "first_line": "# Cell 2 - load features, define training and validation sets"
+ },
+ {
+  "notebook": "04_modeling.ipynb",
+  "code_cell": 3,
+  "file": "04_modeling__cell03.png",
+  "first_line": "# Cell 3 - business rules and a random reference on validation (same daily top-10 policy)"
+ },
+ {
+  "notebook": "04_modeling.ipynb",
+  "code_cell": 4,
+  "file": "04_modeling__cell04.png",
+  "first_line": "# Cell 4 - hyper-parameter and feature-set search for both learned models (fit on train, score validation)"
+ },
+ {
+  "notebook": "04_modeling.ipynb",
+  "code_cell": 5,
+  "file": "04_modeling__cell05.png",
+  "first_line": "# Cell 5 - best configuration per model family (selected on validation only)"
+ },
+ {
+  "notebook": "04_modeling.ipynb",
+  "code_cell": 6,
+  "file": "04_modeling__cell06.png",
+  "first_line": "# Cell 6 - validation comparison table: rules vs learned models under the same daily cap"
+ },
+ {
+  "notebook": "04_modeling.ipynb",
+  "code_cell": 7,
+  "file": "04_modeling__cell07.png",
+  "first_line": "# Cell 7 - final refit of the selected configurations on train+validation (labels mature before TEST_START)"
+ },
+ {
+  "notebook": "04_modeling.ipynb",
+  "code_cell": 8,
+  "file": "04_modeling__cell08.png",
+  "first_line": "# Cell 8 - experiment configuration record (traceability)"
+ },
+ {
+  "notebook": "05_daily_policy_evaluation.ipynb",
+  "code_cell": 1,
+  "file": "05_daily_policy_evaluation__cell01.png",
+  "first_line": "# Cell 1 - make the project package importable and define folders"
+ },
+ {
+  "notebook": "05_daily_policy_evaluation.ipynb",
+  "code_cell": 2,
+  "file": "05_daily_policy_evaluation__cell02.png",
+  "first_line": "# Cell 2 - load features, configuration and final models"
+ },
+ {
+  "notebook": "05_daily_policy_evaluation.ipynb",
+  "code_cell": 3,
+  "file": "05_daily_policy_evaluation__cell03.png",
+  "first_line": "# Cell 3 - score the test orders with every method"
+ },
+ {
+  "notebook": "05_daily_policy_evaluation.ipynb",
+  "code_cell": 4,
+  "file": "05_daily_policy_evaluation__cell04.png",
+  "first_line": "# Cell 4 - operational results under the 10-per-day cap"
+ },
+ {
+  "notebook": "05_daily_policy_evaluation.ipynb",
+  "code_cell": 5,
+  "file": "05_daily_policy_evaluation__cell05.png",
+  "first_line": "# Cell 5 - predictive metrics on the labelled test orders"
+ },
+ {
+  "notebook": "05_daily_policy_evaluation.ipynb",
+  "code_cell": 6,
+  "file": "05_daily_policy_evaluation__cell06.png",
+  "first_line": "# Cell 6 - headline: proposed model vs reference rule vs random"
+ },
+ {
+  "notebook": "05_daily_policy_evaluation.ipynb",
+  "code_cell": 7,
+  "file": "05_daily_policy_evaluation__cell07.png",
+  "first_line": "# Cell 7 - paired daily comparison: on how many days did the model beat / tie / lose to the rule?"
+ },
+ {
+  "notebook": "05_daily_policy_evaluation.ipynb",
+  "code_cell": 8,
+  "file": "05_daily_policy_evaluation__cell08.png",
+  "first_line": "# Cell 8 - cumulative late orders identified over the test period"
+ },
+ {
+  "notebook": "05_daily_policy_evaluation.ipynb",
+  "code_cell": 9,
+  "file": "05_daily_policy_evaluation__cell09.png",
+  "first_line": "# Cell 9 - precision-recall curves on labelled test orders"
+ },
+ {
+  "notebook": "05_daily_policy_evaluation.ipynb",
+  "code_cell": 10,
+  "file": "05_daily_policy_evaluation__cell10.png",
+  "first_line": "# Cell 10 - save the daily prioritisation list for the test period (traceable to order_id + approval date)"
+ },
+ {
+  "notebook": "05_daily_policy_evaluation.ipynb",
+  "code_cell": 11,
+  "file": "05_daily_policy_evaluation__cell11.png",
+  "first_line": "# Cell 11 - how were days with fewer than 10 orders and undetermined outcomes handled?"
+ },
+ {
+  "notebook": "06_sensitivity_diagnostics.ipynb",
+  "code_cell": 1,
+  "file": "06_sensitivity_diagnostics__cell01.png",
+  "first_line": "# Cell 1 - make the project package importable and define folders"
+ },
+ {
+  "notebook": "06_sensitivity_diagnostics.ipynb",
+  "code_cell": 2,
+  "file": "06_sensitivity_diagnostics__cell02.png",
+  "first_line": "# Cell 2 - reload test pool and scores"
+ },
+ {
+  "notebook": "06_sensitivity_diagnostics.ipynb",
+  "code_cell": 3,
+  "file": "06_sensitivity_diagnostics__cell03.png",
+  "first_line": "# Cell 3 - investigation budget sensitivity"
+ },
+ {
+  "notebook": "06_sensitivity_diagnostics.ipynb",
+  "code_cell": 4,
+  "file": "06_sensitivity_diagnostics__cell04.png",
+  "first_line": "# Cell 4 - performance by month of the test period (10/day)"
+ },
+ {
+  "notebook": "06_sensitivity_diagnostics.ipynb",
+  "code_cell": 5,
+  "file": "06_sensitivity_diagnostics__cell05.png",
+  "first_line": "# Cell 5 - failure groups: where are late orders missed? (customer state)"
+ },
+ {
+  "notebook": "06_sensitivity_diagnostics.ipynb",
+  "code_cell": 6,
+  "file": "06_sensitivity_diagnostics__cell06.png",
+  "first_line": "# Cell 6 - failure groups by product category (top 15 by late orders)"
+ },
+ {
+  "notebook": "06_sensitivity_diagnostics.ipynb",
+  "code_cell": 7,
+  "file": "06_sensitivity_diagnostics__cell07.png",
+  "first_line": "# Cell 7 - what do missed late orders look like compared with caught ones?"
+ },
+ {
+  "notebook": "06_sensitivity_diagnostics.ipynb",
+  "code_cell": 8,
+  "file": "06_sensitivity_diagnostics__cell08.png",
+  "first_line": "# Cell 8 - model drivers: logistic-regression coefficients and LightGBM gain importance"
+ },
+ {
+  "notebook": "06_sensitivity_diagnostics.ipynb",
+  "code_cell": 9,
+  "file": "06_sensitivity_diagnostics__cell09.png",
+  "first_line": "# Cell 9 - calibration of the predicted probabilities (labelled test orders)"
+ },
+ {
+  "notebook": "06_sensitivity_diagnostics.ipynb",
+  "code_cell": 10,
+  "file": "06_sensitivity_diagnostics__cell10.png",
+  "first_line": "# Cell 10 - refit on train+validation vs the validation-period model (no refit)"
+ },
+ {
+  "notebook": "06_sensitivity_diagnostics.ipynb",
+  "code_cell": 11,
+  "file": "06_sensitivity_diagnostics__cell11.png",
+  "first_line": "# Cell 11 - feature-group ablation for the proposed model family (refit on train+validation, test)"
+ },
+ {
+  "notebook": "06_sensitivity_diagnostics.ipynb",
+  "code_cell": 12,
+  "file": "06_sensitivity_diagnostics__cell12.png",
+  "first_line": "# Cell 12 - investigate fewer than 10 when risk is low? precision of the daily rank positions"
+ },
+ {
+  "notebook": "06_sensitivity_diagnostics.ipynb",
+  "code_cell": 13,
+  "file": "06_sensitivity_diagnostics__cell13.png",
+  "first_line": "# Cell 13 - post-hoc: slack features (validation first, then test)"
+ },
+ {
+  "notebook": "06_sensitivity_diagnostics.ipynb",
+  "code_cell": 14,
+  "file": "06_sensitivity_diagnostics__cell14.png",
+  "first_line": "# Cell 14 - summary of all saved outputs"
+ }
+]

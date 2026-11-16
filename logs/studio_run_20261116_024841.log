@@ -1,0 +1,38 @@
+[Mon Nov 16 02:48:41 UTC 2026] bootstrap start on default as sagemaker-user
+{"AppType":"JupyterLab","DomainId":"d-hfxnlufab81e","SpaceName":"mlproj2-ecommerce-space","UserProfileName":"ajay-uppu","ExecutionRoleArn":"arn:aws:iam::044450716277:role/ml-project2-olist-sagemaker-exec","ResourceArn":"arn:aws:sagemaker:us-east-1:044450716277:app/d-hfxnlufab81e/mlproj2-ecommerce-space/JupyterLab/default","ResourceName":"default","AppImageVersion":"","ResourceArnCaseSensitive":"arn:aws:sagemaker:us-east-1:044450716277:app/d-hfxnlufab81e/mlproj2-ecommerce-space/JupyterLab/default","IpAddressType":"ipv4"}
+base python: /opt/conda/bin/python3 Python 3.12.15
+Installed kernelspec mlproj2 in /home/sagemaker-user/.local/share/jupyter/kernels/mlproj2
+[Mon Nov 16 02:49:23 UTC 2026] environment ready
+total 123248
+-rw-r--r--. 1 sagemaker-user users  9033957 Nov 16 02:37 olist_customers_dataset.csv
+-rw-r--r--. 1 sagemaker-user users 61273883 Nov 16 02:37 olist_geolocation_dataset.csv
+-rw-r--r--. 1 sagemaker-user users 15438671 Nov 16 02:37 olist_order_items_dataset.csv
+-rw-r--r--. 1 sagemaker-user users  5777138 Nov 16 02:38 olist_order_payments_dataset.csv
+-rw-r--r--. 1 sagemaker-user users 14451670 Nov 16 02:38 olist_order_reviews_dataset.csv
+-rw-r--r--. 1 sagemaker-user users 17654914 Nov 16 02:38 olist_orders_dataset.csv
+-rw-r--r--. 1 sagemaker-user users  2379446 Nov 16 02:38 olist_products_dataset.csv
+-rw-r--r--. 1 sagemaker-user users   174703 Nov 16 02:38 olist_sellers_dataset.csv
+-rw-r--r--. 1 sagemaker-user users     2613 Nov 16 02:38 product_category_name_translation.csv
+==> 00_setup_environment.ipynb
+[IPKernelApp] WARNING | Kernel is running over TCP without encryption. All communication (including code and outputs) is sent in plain text and is susceptible to eavesdropping. Use IPC transport or launch with kernel manager-provisioned CurveZMQ keys to enable transport encryption.
+    done in 3s
+==> 01_data_audit.ipynb
+[IPKernelApp] WARNING | Kernel is running over TCP without encryption. All communication (including code and outputs) is sent in plain text and is susceptible to eavesdropping. Use IPC transport or launch with kernel manager-provisioned CurveZMQ keys to enable transport encryption.
+    done in 8s
+==> 02_labels_and_eligibility.ipynb
+[IPKernelApp] WARNING | Kernel is running over TCP without encryption. All communication (including code and outputs) is sent in plain text and is susceptible to eavesdropping. Use IPC transport or launch with kernel manager-provisioned CurveZMQ keys to enable transport encryption.
+    done in 6s
+==> 03_feature_engineering.ipynb
+[IPKernelApp] WARNING | Kernel is running over TCP without encryption. All communication (including code and outputs) is sent in plain text and is susceptible to eavesdropping. Use IPC transport or launch with kernel manager-provisioned CurveZMQ keys to enable transport encryption.
+    done in 30s
+==> 04_modeling.ipynb
+[IPKernelApp] WARNING | Kernel is running over TCP without encryption. All communication (including code and outputs) is sent in plain text and is susceptible to eavesdropping. Use IPC transport or launch with kernel manager-provisioned CurveZMQ keys to enable transport encryption.
+    done in 160s
+==> 05_daily_policy_evaluation.ipynb
+[IPKernelApp] WARNING | Kernel is running over TCP without encryption. All communication (including code and outputs) is sent in plain text and is susceptible to eavesdropping. Use IPC transport or launch with kernel manager-provisioned CurveZMQ keys to enable transport encryption.
+    done in 25s
+==> 06_sensitivity_diagnostics.ipynb
+[IPKernelApp] WARNING | Kernel is running over TCP without encryption. All communication (including code and outputs) is sent in plain text and is susceptible to eavesdropping. Use IPC transport or launch with kernel manager-provisioned CurveZMQ keys to enable transport encryption.
+    done in 52s
+all notebooks executed
+[Mon Nov 16 02:54:08 UTC 2026] run_all exit code 0, 283s

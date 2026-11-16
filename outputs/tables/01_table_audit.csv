@@ -1,0 +1,10 @@
+table,rows,columns,primary_key,pk_unique,exact_duplicate_rows,cells_missing,columns_with_missing
+orders,99441,8,order_id,True,0,4908,"order_approved_at=160, order_delivered_carrier_date=1783, order_delivered_customer_date=2965"
+items,112650,7,order_id+order_item_id,True,0,0,
+customers,99441,5,customer_id,True,0,0,
+sellers,3095,4,seller_id,True,0,0,
+products,32951,9,product_id,True,0,2448,"product_category_name=610, product_name_lenght=610, product_description_lenght=610, product_photos_qty=610, product_weight_g=2, product_length_cm=2, product_height_cm=2, product_width_cm=2"
+payments,103886,5,order_id+payment_sequential,True,0,0,
+reviews,99224,7,review_id+order_id,True,0,145903,"review_comment_title=87656, review_comment_message=58247"
+geolocation,1000163,5,(none),,261831,0,
+translation,71,2,product_category_name,True,0,0,

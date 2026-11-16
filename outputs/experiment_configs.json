@@ -1,0 +1,252 @@
+{
+  "seed": 42,
+  "splits": {
+    "train": [
+      "2017-01-01",
+      "2018-03-01"
+    ],
+    "validation": [
+      "2018-03-01",
+      "2018-06-01"
+    ],
+    "test": [
+      "2018-06-01",
+      "2018-09-01"
+    ]
+  },
+  "label_definition": "is_late = date(order_delivered_customer_date) > date(order_estimated_delivery_date); undelivered = undetermined",
+  "label_maturity_days": 60,
+  "daily_capacity": 10,
+  "train_rows_for_selection": 43276,
+  "trainval_rows_for_final_refit": 64109,
+  "selection_criterion": "validation late orders captured by daily top-10, tie-break PR-AUC",
+  "logreg_grid": [
+    {
+      "C": 0.01,
+      "class_weight": null
+    },
+    {
+      "C": 0.01,
+      "class_weight": "balanced"
+    },
+    {
+      "C": 0.1,
+      "class_weight": null
+    },
+    {
+      "C": 0.1,
+      "class_weight": "balanced"
+    },
+    {
+      "C": 1.0,
+      "class_weight": null
+    },
+    {
+      "C": 1.0,
+      "class_weight": "balanced"
+    }
+  ],
+  "lgbm_grid": [
+    {
+      "num_leaves": 7,
+      "n_estimators": 200,
+      "min_child_samples": 100,
+      "learning_rate": 0.03
+    },
+    {
+      "num_leaves": 7,
+      "n_estimators": 200,
+      "min_child_samples": 400,
+      "learning_rate": 0.03
+    },
+    {
+      "num_leaves": 7,
+      "n_estimators": 500,
+      "min_child_samples": 100,
+      "learning_rate": 0.03
+    },
+    {
+      "num_leaves": 7,
+      "n_estimators": 500,
+      "min_child_samples": 400,
+      "learning_rate": 0.03
+    },
+    {
+      "num_leaves": 15,
+      "n_estimators": 200,
+      "min_child_samples": 100,
+      "learning_rate": 0.03
+    },
+    {
+      "num_leaves": 15,
+      "n_estimators": 200,
+      "min_child_samples": 400,
+      "learning_rate": 0.03
+    },
+    {
+      "num_leaves": 15,
+      "n_estimators": 500,
+      "min_child_samples": 100,
+      "learning_rate": 0.03
+    },
+    {
+      "num_leaves": 15,
+      "n_estimators": 500,
+      "min_child_samples": 400,
+      "learning_rate": 0.03
+    },
+    {
+      "num_leaves": 31,
+      "n_estimators": 200,
+      "min_child_samples": 100,
+      "learning_rate": 0.03
+    },
+    {
+      "num_leaves": 31,
+      "n_estimators": 200,
+      "min_child_samples": 400,
+      "learning_rate": 0.03
+    },
+    {
+      "num_leaves": 31,
+      "n_estimators": 500,
+      "min_child_samples": 100,
+      "learning_rate": 0.03
+    },
+    {
+      "num_leaves": 31,
+      "n_estimators": 500,
+      "min_child_samples": 400,
+      "learning_rate": 0.03
+    }
+  ],
+  "feature_sets": {
+    "all": [
+      "approve_delay_hours",
+      "promised_days",
+      "promised_days_from_purchase",
+      "days_to_shipping_limit",
+      "approval_hour",
+      "approval_dow",
+      "purchase_hour",
+      "is_weekend_approval",
+      "n_items",
+      "n_products",
+      "n_sellers",
+      "total_price",
+      "total_freight",
+      "freight_ratio",
+      "max_item_price",
+      "total_weight_g",
+      "total_volume_cm3",
+      "max_weight_g",
+      "category_missing",
+      "n_payment_rows",
+      "max_installments",
+      "payment_value",
+      "used_voucher",
+      "distance_km",
+      "same_state",
+      "same_city",
+      "customer_lat",
+      "customer_lng",
+      "seller_lat",
+      "seller_lng",
+      "geo_missing",
+      "seller_prior_orders",
+      "seller_orders_7d",
+      "seller_days_active",
+      "seller_prior_outcomes",
+      "seller_late_rate_sm",
+      "seller_open_orders",
+      "seller_overdue_open",
+      "customer_prior_orders",
+      "cust_state_late_rate_sm",
+      "route_late_rate_sm",
+      "category_late_rate_sm",
+      "market_late_rate_30d",
+      "market_overdue_open",
+      "market_orders_7d"
+    ],
+    "no_market": [
+      "approve_delay_hours",
+      "promised_days",
+      "promised_days_from_purchase",
+      "days_to_shipping_limit",
+      "approval_hour",
+      "approval_dow",
+      "purchase_hour",
+      "is_weekend_approval",
+      "n_items",
+      "n_products",
+      "n_sellers",
+      "total_price",
+      "total_freight",
+      "freight_ratio",
+      "max_item_price",
+      "total_weight_g",
+      "total_volume_cm3",
+      "max_weight_g",
+      "category_missing",
+      "n_payment_rows",
+      "max_installments",
+      "payment_value",
+      "used_voucher",
+      "distance_km",
+      "same_state",
+      "same_city",
+      "customer_lat",
+      "customer_lng",
+      "seller_lat",
+      "seller_lng",
+      "geo_missing",
+      "seller_prior_orders",
+      "seller_orders_7d",
+      "seller_days_active",
+      "seller_prior_outcomes",
+      "seller_late_rate_sm",
+      "seller_open_orders",
+      "seller_overdue_open",
+      "customer_prior_orders",
+      "cust_state_late_rate_sm",
+      "route_late_rate_sm",
+      "category_late_rate_sm"
+    ]
+  },
+  "categorical_features": [
+    "customer_state",
+    "seller_state",
+    "main_category",
+    "payment_type_main"
+  ],
+  "selected": {
+    "logreg": {
+      "params": {
+        "C": 0.01,
+        "class_weight": null
+      },
+      "feature_set": "no_market",
+      "val_late_identified": 256,
+      "val_pr_auc": 0.2008
+    },
+    "lgbm": {
+      "params": {
+        "num_leaves": 7,
+        "n_estimators": 200,
+        "min_child_samples": 400,
+        "learning_rate": 0.03
+      },
+      "feature_set": "all",
+      "val_late_identified": 227,
+      "val_pr_auc": 0.1956
+    }
+  },
+  "proposed_model": "logreg",
+  "reference_rule": "rule_longest_distance",
+  "libraries": {
+    "numpy": "2.2.6",
+    "pandas": "2.2.3",
+    "sklearn": "1.6.1",
+    "lightgbm": "4.6.0"
+  }
+}
